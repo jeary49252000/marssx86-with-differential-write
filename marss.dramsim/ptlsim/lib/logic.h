@@ -368,6 +368,9 @@ template <typename T, int ways>
 struct FullyAssociativeTags {
   bitvec<ways> evictmap;
   T tags[ways];
+  // scyu: add differential write information 
+  //     : store data in cache
+  T data[ways];
 
   static const T INVALID = InvalidTag<T>::INVALID;
 
@@ -379,6 +382,7 @@ struct FullyAssociativeTags {
     evictmap = 0;
     foreach (i, ways) {
       tags[i] = INVALID;
+      data[i] = 0x5566; // scyu: magic number for INVALID 
     }
   }
 
@@ -413,6 +417,26 @@ struct FullyAssociativeTags {
 
   int lru() const {
     return (evictmap.allset()) ? 0 : (~evictmap).lsb();
+  }
+
+  // scyu: add differential write information 
+  //     : store data in cache
+  int select(T target, T newdata ,T& oldtag, T& olddata) {
+    int way = probe(target);
+    if (way < 0) {
+      way = lru();
+      if (evictmap.allset()) evictmap = 0;
+      oldtag = tags[way];
+      olddata = data[way];
+      tags[way] = target;
+      data[way] = newdata;
+    }
+    use(way);
+    if (evictmap.allset()) {
+        evictmap = 0;
+        use(way);
+    }
+    return way;
   }
 
   int select(T target, T& oldtag) {
@@ -785,6 +809,24 @@ struct FullyAssociativeArray {
 
     return &slot;
   }
+  
+  // scyu: add differential write information 
+  //     : store data in cache
+  V* select(T tag, T newdata, T& oldtag, T& olddata) {
+    int way = tags.select(tag, newdata ,oldtag, olddata);
+
+    V& slot = data[way];
+
+    if ((way >= 0) & (tag == oldtag)) {
+      stats::probed(slot, tag, way, 1);
+    } else {
+      if (oldtag == tags.INVALID)
+        stats::inserted(slot, tag, way);
+      else stats::replaced(slot, oldtag, tag, way);
+    }
+
+    return &slot;
+  }
 
   V* select(T tag) {
     T dummy;
@@ -875,6 +917,12 @@ struct AssociativeArray {
 
   V* select(T addr, T& oldaddr) {
     return sets[setof(addr)].select(tagof(addr), oldaddr);
+  }
+
+  // scyu: add differential write information 
+  //     : store data in cache
+  V* select(T addr, T newdata, T& oldaddr, T& olddata) {
+    return sets[setof(addr)].select(tagof(addr), newdata ,oldaddr, olddata);
   }
 
   V* select(T addr) {

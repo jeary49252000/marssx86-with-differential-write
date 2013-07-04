@@ -38,6 +38,12 @@
 
 #include <machine.h>
 
+// scyu: add differential write information 
+// To fetch the context of thread
+#include <basecore.h> 
+#include <ooo.h> 
+#include <bitset>
+
 extern uint64_t qemu_ram_size;
 using namespace Memory;
 
@@ -85,7 +91,11 @@ MemoryController::MemoryController(W8 coreid, const char *name,
     totalWriteLatency[0] = totalWriteLatency[1] = 0;
     totalReadCount = 0;
     totalWriteCount = 0;
-
+  
+    // scyu: add differential write information 
+    totalBitSetCount = 0;
+    totalBitResetCount = 0;
+    totalPageFaultCount = 0;
 }
 
 /*
@@ -205,6 +215,59 @@ bool MemoryController::handle_interconnect_cb(void *arg)
 	// 	of a transaction and maybe make sure it matches the LLC line size
 	physicalAddress = ALIGN_ADDRESS(physicalAddress, dramsim_transaction_size); 
     
+    // scyu: add differential write information 
+    
+    // a write request to memory subsystem
+    // cout << "Write 0x" << std::hex << memRequest->get_data() << " to 0x" << std::hex << memRequest->get_physical_address()<< endl; 
+    if(memRequest->get_type() == MEMORY_OP_UPDATE){
+        // get the previous data to compare the difference at this update
+        W64  prev_data = 0x5566; // magic number
+        bool failedToCountDifference = true;
+        if(memoryHierarchy_->get_data_from_map(memRequest->get_physical_address(), prev_data) == true){
+            // retrieve successfully
+            failedToCountDifference = false;
+        }else{
+            // the entry is empty, must get the previous value from vm
+            BaseMachine* m = &memoryHierarchy_->get_machine();
+            if(m != NULL){
+                OOO_CORE_MODEL::OooCore *core = (OOO_CORE_MODEL::OooCore *) m->cores[memRequest->get_coreid()];
+                if(core != NULL && core->threads[memRequest->get_threadid()] != NULL){
+                    PageFaultErrorCode pfec = 0;
+                    int exception = 0, mmio = 0;  
+                    W64 virtaddr = memRequest->get_virtual_address();
+                    core->threads[memRequest->get_threadid()]->ctx.check_and_translate (virtaddr, 0, false, false, exception, mmio, pfec);
+                    
+                    if(exception > 0 || pfec > 0){
+                        // page fault occurs (EXCEPTION_PageFaultOnRead in check_and_translate)
+                        totalPageFaultCount++;
+                    }else{
+                        prev_data = core->threads[memRequest->get_threadid()]->ctx.loadvirt(virtaddr, 3); 
+                        failedToCountDifference = false;
+                    }
+                }
+            }
+        }
+
+        // count the different token when success
+        if(!failedToCountDifference){
+            // cout << "Prev Data: " << std::bitset<64>(prev_data) << " [" << std::hex << prev_data << "]"<< endl;
+            // cout << "New  Data: " << std::bitset<64>(memRequest->get_data()) << " [" << std::hex << memRequest->get_data() << "]"<< endl;
+            W64 diff = prev_data ^ memRequest->get_data();
+            W64 set, reset;    
+            for(set = 0, reset = 0; diff; diff >>= 1, prev_data >>= 1){
+                // scyu: not use if-else statement here for better(?) efficiency
+                reset += 1 & diff & prev_data;  // the original data of this modified bit is 1: reset 
+                set   += 1 & diff & !prev_data; // the original data of this modified bit is 0: set  
+            }
+            // update statistical infomation
+            totalBitSetCount   += set;
+            totalBitResetCount += reset;
+        }
+
+        // update the lookup map
+        memoryHierarchy_->insert_data_to_map(memRequest->get_physical_address(),memRequest->get_data()); 
+    }
+
     /* This fixes issue #9: since we assume a write-allocate policy for MARSS,
      * a MEMORY_OP_WRITE which corresponds to a write miss should be treated as
      * a read operation in DRAMSim2. Once the line is brought into the cache it
@@ -226,66 +289,66 @@ bool MemoryController::handle_interconnect_cb(void *arg)
     }
 #endif
 
-	return true;
+    return true;
 }
 
 void MemoryController::print(ostream& os) const
 {
-	os << "---Memory-Controller: ", get_name(), endl;
-	if(pendingRequests_.count() > 0)
-		os << "Queue : ", pendingRequests_, endl;
+    os << "---Memory-Controller: ", get_name(), endl;
+    if(pendingRequests_.count() > 0)
+        os << "Queue : ", pendingRequests_, endl;
     os << "banksUsed_: ", banksUsed_, endl;
-	os << "---End Memory-Controller: ", get_name(), endl;
+    os << "---End Memory-Controller: ", get_name(), endl;
 }
 #ifdef DRAMSIM
 void MemoryController::write_return_cb(uint id, uint64_t addr, uint64_t cycle)
 {
-	MemoryQueueEntry *queueEntry = NULL;
-	memdebug("[DRAMSIM] WRITE ACK" <<std::hex<<addr<<std::dec);
+    MemoryQueueEntry *queueEntry = NULL;
+    memdebug("[DRAMSIM] WRITE ACK" <<std::hex<<addr<<std::dec);
 
-	foreach_list_mutable(pendingRequests_.list(), queueEntry, entry_t,
-			prev_t) {
-		if (ALIGN_ADDRESS(queueEntry->request->get_physical_address(),dramsim_transaction_size) == addr)
-		{
+    foreach_list_mutable(pendingRequests_.list(), queueEntry, entry_t,
+            prev_t) {
+        if (ALIGN_ADDRESS(queueEntry->request->get_physical_address(),dramsim_transaction_size) == addr)
+        {
             queueEntry->request->timeStamp[2] = sim_cycle;
             totalWriteCount ++;
             totalWriteLatency[0] += queueEntry->request->timeStamp[1] - queueEntry->request->timeStamp[0];
             totalWriteLatency[1] += queueEntry->request->timeStamp[2] - queueEntry->request->timeStamp[1];
 
-			memdebug("[DRAMSIM] entry for address "<< std::hex << addr << std::dec);
-			access_completed_cb(queueEntry);
-			return;
-		}
-	}
-	assert(0);
+            memdebug("[DRAMSIM] entry for address "<< std::hex << addr << std::dec);
+            access_completed_cb(queueEntry);
+            return;
+        }
+    }
+    assert(0);
 }
 
 void MemoryController::read_return_cb(uint id, uint64_t addr, uint64_t cycle)
 {
-	//make sure something is there
-//	assert(pending_map.find(addr) != pending_map.end());
-	// no delay here since we've already waited up to this cycle
-//	Message *message = pending_map[addr];
-	MemoryQueueEntry *queueEntry = NULL;
+    //make sure something is there
+    //	assert(pending_map.find(addr) != pending_map.end());
+    // no delay here since we've already waited up to this cycle
+    //	Message *message = pending_map[addr];
+    MemoryQueueEntry *queueEntry = NULL;
 
 
-	memdebug("[DRAMSIM] READ RETURN 0x"<<std::hex<<addr<<std::dec);
+    memdebug("[DRAMSIM] READ RETURN 0x"<<std::hex<<addr<<std::dec);
 
-	foreach_list_mutable(pendingRequests_.list(), queueEntry, entry_t,
-			prev_t) {
-		if (ALIGN_ADDRESS(queueEntry->request->get_physical_address(),dramsim_transaction_size) == addr)
-		{
+    foreach_list_mutable(pendingRequests_.list(), queueEntry, entry_t,
+            prev_t) {
+        if (ALIGN_ADDRESS(queueEntry->request->get_physical_address(),dramsim_transaction_size) == addr)
+        {
             queueEntry->request->timeStamp[2] = sim_cycle;
-			totalReadCount ++;
+            totalReadCount ++;
             totalReadLatency[0] += queueEntry->request->timeStamp[1] - queueEntry->request->timeStamp[0];
             totalReadLatency[1] += queueEntry->request->timeStamp[2] - queueEntry->request->timeStamp[1];
-            
+
             memdebug("[DRAMSIM] entry for address "<< std::hex << addr << queueEntry->request << std::dec);
-			access_completed_cb(queueEntry);
-			return;
-		}
-	}
-	assert(0);
+            access_completed_cb(queueEntry);
+            return;
+        }
+    }
+    assert(0);
 
 }
 
@@ -341,57 +404,57 @@ bool MemoryController::access_completed_cb(void *arg)
                 endl);
         wait_interconnect_cb(queueEntry);
     } else {
-		 memdebug("!!!!!annuled entry!!!"); 
+        memdebug("!!!!!annuled entry!!!"); 
         queueEntry->request->decRefCounter();
         ADD_HISTORY_REM(queueEntry->request);
         pendingRequests_.free(queueEntry);
     }
 
-	return true;
+    return true;
 }
 
 bool MemoryController::wait_interconnect_cb(void *arg)
 {
 
-	MemoryQueueEntry *queueEntry = (MemoryQueueEntry*)arg;
+    MemoryQueueEntry *queueEntry = (MemoryQueueEntry*)arg;
 
-	bool success = false;
+    bool success = false;
 
-	/* Don't send response if its a memory update request */
-	if(queueEntry->request->get_type() == MEMORY_OP_UPDATE) {
-		memdebug("!!!! ignoring update request !!!!" );
-		queueEntry->request->decRefCounter();
-		ADD_HISTORY_REM(queueEntry->request);
-		pendingRequests_.free(queueEntry);
-		return true;
-	}
+    /* Don't send response if its a memory update request */
+    if(queueEntry->request->get_type() == MEMORY_OP_UPDATE) {
+        memdebug("!!!! ignoring update request !!!!" );
+        queueEntry->request->decRefCounter();
+        ADD_HISTORY_REM(queueEntry->request);
+        pendingRequests_.free(queueEntry);
+        return true;
+    }
 
-	/* First send response of the current request */
-	Message& message = *memoryHierarchy_->get_message();
-	message.sender = this;
-	message.dest = queueEntry->source;
-	message.request = queueEntry->request;
-	message.hasData = true;
+    /* First send response of the current request */
+    Message& message = *memoryHierarchy_->get_message();
+    message.sender = this;
+    message.dest = queueEntry->source;
+    message.request = queueEntry->request;
+    message.hasData = true;
 
-	memdebug("Memory sending message: ", message);
-	success = cacheInterconnect_->get_controller_request_signal()->
-		emit(&message);
-	/* Free the message */
-	memoryHierarchy_->free_message(&message);
+    memdebug("Memory sending message: ", message);
+    success = cacheInterconnect_->get_controller_request_signal()->
+        emit(&message);
+    /* Free the message */
+    memoryHierarchy_->free_message(&message);
 
-	if(!success) {
-		/* Failed to response to cache, retry after 1 cycle */
-		marss_add_event(&waitInterconnect_, 1, queueEntry);
-	} else {
-		queueEntry->request->decRefCounter();
-		ADD_HISTORY_REM(queueEntry->request);
-		pendingRequests_.free(queueEntry);
+    if(!success) {
+        /* Failed to response to cache, retry after 1 cycle */
+        marss_add_event(&waitInterconnect_, 1, queueEntry);
+    } else {
+        queueEntry->request->decRefCounter();
+        ADD_HISTORY_REM(queueEntry->request);
+        pendingRequests_.free(queueEntry);
 
-		if(!pendingRequests_.isFull()) {
-			memoryHierarchy_->set_controller_full(this, false);
-		}
-	}
-	return true;
+        if(!pendingRequests_.isFull()) {
+            memoryHierarchy_->set_controller_full(this, false);
+        }
+    }
+    return true;
 }
 
 void MemoryController::annul_request(MemoryRequest *request)
@@ -412,14 +475,14 @@ void MemoryController::annul_request(MemoryRequest *request)
 
 int MemoryController::get_no_pending_request(W8 coreid)
 {
-	int count = 0;
-	MemoryQueueEntry *queueEntry;
-	foreach_list_mutable(pendingRequests_.list(), queueEntry,
-			entry, nextentry) {
-		if(queueEntry->request->get_coreid() == coreid)
-			count++;
-	}
-	return count;
+    int count = 0;
+    MemoryQueueEntry *queueEntry;
+    foreach_list_mutable(pendingRequests_.list(), queueEntry,
+            entry, nextentry) {
+        if(queueEntry->request->get_coreid() == coreid)
+            count++;
+    }
+    return count;
 }
 
 /**
@@ -429,16 +492,16 @@ int MemoryController::get_no_pending_request(W8 coreid)
  */
 void MemoryController::dump_configuration(YAML::Emitter &out) const
 {
-	out << YAML::Key << get_name() << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << get_name() << YAML::Value << YAML::BeginMap;
 
-	YAML_KEY_VAL(out, "type", "dram_cont");
-	YAML_KEY_VAL(out, "RAM_size", ram_size); /* ram_size is from QEMU */
-	YAML_KEY_VAL(out, "number_of_banks", MEM_BANKS);
-	YAML_KEY_VAL(out, "latency", latency_);
-	YAML_KEY_VAL(out, "latency_ns", simcycles_to_ns(latency_));
-	YAML_KEY_VAL(out, "pending_queue_size", pendingRequests_.size());
+    YAML_KEY_VAL(out, "type", "dram_cont");
+    YAML_KEY_VAL(out, "RAM_size", ram_size); /* ram_size is from QEMU */
+    YAML_KEY_VAL(out, "number_of_banks", MEM_BANKS);
+    YAML_KEY_VAL(out, "latency", latency_);
+    YAML_KEY_VAL(out, "latency_ns", simcycles_to_ns(latency_));
+    YAML_KEY_VAL(out, "pending_queue_size", pendingRequests_.size());
 
-	out << YAML::EndMap;
+    out << YAML::EndMap;
 }
 
 /* Memory Controller Builder */

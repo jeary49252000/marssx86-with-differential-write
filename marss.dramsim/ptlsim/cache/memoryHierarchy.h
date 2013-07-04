@@ -235,6 +235,23 @@ namespace Memory {
 
     BaseMachine& get_machine() { return machine_; }
 
+    // scyu:  add differential write information 
+    //        a map structure for recording the previous data value
+    // input: <address, data value>
+    // return: nothing
+    void insert_data_to_map(W64 addr, W64 data){
+        // cout << "insert :" << std::hex << data << endl;
+        prevData_[addr] = data;
+    }
+    // input: <target address>
+    // return: success or not 
+    bool get_data_from_map(W64 addr, W64& data){
+        // cout << "count [" << std::hex << addr << "] = " << prevData_.count(addr)  << endl;
+        if(prevData_.count(addr) == 0) return false;
+        data = prevData_.at(addr);
+        return true;
+    }
+
     void add_cpu_controller(Controller* cont) {
         cpuControllers_.push(cont);
     }
@@ -264,6 +281,10 @@ namespace Memory {
 
     // machine
     BaseMachine &machine_;
+
+    // scyu:  add differential write information 
+    //        a map structure for recording the previous data value
+    std::map<W64, W64> prevData_;
 
 	// array of caches and memory
 	dynarray<Controller*> cpuControllers_;

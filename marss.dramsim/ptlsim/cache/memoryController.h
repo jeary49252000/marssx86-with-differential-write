@@ -142,6 +142,10 @@ class MemoryController : public Controller
         W64 totalWriteLatency[2];
         W64 totalWriteCount;
 
+        // add statistical information
+        W64 totalBitSetCount;
+        W64 totalBitResetCount;
+        W64 totalPageFaultCount; // failed to get the set/rest information
 };
 
 };

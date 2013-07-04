@@ -57,6 +57,10 @@ void MemoryController::resetHistory()
     totalWriteCount   = 0;
     totalReadCount    = 0;
     totalRefreshCount   = 0;
+
+    // scyu: add differential write information 
+    totalBitSetCount   = 0;
+    totalBitResetCount = 0;
 }
 
 MemoryController::MemoryController(MemorySystem *parent, CSVWriter &csvOut_, ostream &dramsim_log_) :

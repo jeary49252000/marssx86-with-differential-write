@@ -2100,6 +2100,23 @@ int ReorderBufferEntry::commit() {
                     Memory::MEMORY_OP_WRITE);
             request->set_coreSignal(&core.dcache_signal);
 
+            // scyu: add differential write information  
+            // add data to request     
+            request->set_data(lsq->data);
+            // set virtual addree
+            request->set_virtual_address(lsq->virtaddr);
+            // probe the target address
+            W64 prev_data;
+            if(core.memoryHierarchy->get_data_from_map(lsq->physaddr, prev_data) == false){
+                // first access to write memory at lsq->physaddr
+                // => store current value in map as previous value for future
+                W64 curr_data = thread.ctx.loadvirt(lsq->virtaddr, 3);
+                core.memoryHierarchy->insert_data_to_map(lsq->physaddr, curr_data);
+            }else{
+                // do nothing, we only update the previous data map on (1) first store in pipeline
+                // or (2) commit to memory subsystem
+            }
+
             assert(core.memoryHierarchy->access_cache(request));
             assert(lsq->virtaddr > 0xfff);
             if(config.checker_enabled && !ctx.kernel_mode) {

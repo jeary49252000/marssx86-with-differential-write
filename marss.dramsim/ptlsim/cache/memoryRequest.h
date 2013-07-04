@@ -65,6 +65,9 @@ class MemoryRequest: public selfqueuelink
 			refCounter_ = 0; // or maybe 1
 			opType_ = MEMORY_OP_READ;
 			isData_ = 0;
+			// scyu: add differential write information
+            // (add data in memory request)
+            data_ = (W64) 0x5566; // scyu: magic number for INVALID 
 			history = new stringbuf();
             coreSignal_ = NULL;
 		}
@@ -128,6 +131,14 @@ class MemoryRequest: public selfqueuelink
 
 		W64 get_init_cycles() { return cycles_; }
 
+        // scyu: add differential write information 
+        W64 get_data(void) { return data_; }
+        void set_data(W64 data) { data_ = data; }
+
+        // scyu: add differential write information 
+        W64 get_virtual_address(void) { return virtualAddress_; }
+        void set_virtual_address(W64 addr) { virtualAddress_ = addr; }
+
 		stringbuf& get_history() { return *history; }
 
         bool is_kernel() {
@@ -164,7 +175,12 @@ class MemoryRequest: public selfqueuelink
             if(coreSignal_) {
                 os << "Signal[ " << coreSignal_->get_name() << "] ";
             }
-			return os;
+			// scyu: add differential write information
+            // (add data in memory request)
+            if(isData_){
+                os << "data[ " << data_ << "] ";
+            }
+            return os;
 		}
 
         W64 timeStamp[3];
@@ -173,6 +189,9 @@ class MemoryRequest: public selfqueuelink
 		W8 coreId_;
 		W8 threadId_;
 		W64 physicalAddress_;
+        // scyu: add differential write information 
+        // Store virtual address for lookup the content from vm
+        W64 virtualAddress_;
 		bool isData_;
 		int robId_;
 		W64 cycles_;
@@ -182,6 +201,9 @@ class MemoryRequest: public selfqueuelink
 		OP_TYPE opType_;
 		stringbuf *history;
         Signal *coreSignal_;
+
+        // scyu: add differential write information 
+        W64 data_; // add information of data in memory request (for write)
 };
 
 static inline ostream& operator <<(ostream& os, const MemoryRequest& request)

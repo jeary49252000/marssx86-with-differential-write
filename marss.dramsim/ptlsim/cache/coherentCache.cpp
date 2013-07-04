@@ -366,18 +366,30 @@ bool CacheController::complete_request(Message &message,
     if(queueEntry->line == NULL || queueEntry->line->tag !=
             cacheLines_->tagOf(queueEntry->request->get_physical_address())) {
         W64 oldTag = InvalidTag<W64>::INVALID;
-        CacheLine *line = cacheLines_->insert(queueEntry->request,
-                oldTag);
+
+        // scyu: add differential write information 
+        //     : store data in cache
+        W64 oldData;
+        CacheLine *line = cacheLines_->insert(queueEntry->request, 
+                queueEntry->request->get_data() ,oldTag, oldData);
+#if 0
+        cout << "Insert @" << std::hex << queueEntry->request->get_physical_address() << "[ " 
+            << std::hex << queueEntry->request->get_data() << " ] to " << get_name();
+        cout << "\t\t( Old Data & Tag = [ " << std::hex << oldData << ", " 
+            << std::hex << oldTag << " ] )" << endl;
+#endif
 
         /* If line is in use then don't evict it, it will be inserted later. */
         if (is_line_in_use(oldTag)) {
             oldTag = -1;
         }
 
+        // scyu: add differential write information 
+        //     : store data in cache
         queueEntry->line = line;
         handle_cache_insert(queueEntry, oldTag);
         queueEntry->line->init(cacheLines_->tagOf(queueEntry->
-                    request->get_physical_address()));
+                    request->get_physical_address()), queueEntry->request->get_data());
     }
 
     assert(queueEntry->line);

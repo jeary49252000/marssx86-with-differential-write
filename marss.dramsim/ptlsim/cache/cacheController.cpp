@@ -164,7 +164,6 @@ bool CacheController::handle_interconnect_cb(void *arg)
 	Interconnect *sender = (Interconnect*)msg->sender;
 
 	memdebug("Message received is: ", *msg);
-
 	if(sender == upperInterconnect_ || sender == upperInterconnect2_) {
 
 		if(msg->hasData && msg->request->get_type() !=
@@ -673,7 +672,6 @@ bool CacheController::wait_interconnect_cb(void *arg)
 	}
 
 	memdebug("Queue Entry: " << *queueEntry << endl);
-
 	Message& message = *memoryHierarchy_->get_message();
 	message.sender = this;
 	message.request = queueEntry->request;

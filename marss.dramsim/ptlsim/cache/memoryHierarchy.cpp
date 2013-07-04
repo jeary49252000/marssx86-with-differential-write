@@ -133,6 +133,11 @@ void MemoryHierarchy::printDramStatsByMarss()
     ptl_logfile << "Marss total write count : " << ((MemoryController*)memoryController_)->totalWriteCount << endl;
     ptl_logfile << "Marss total write latency for wait : " << ((MemoryController*)memoryController_)->totalWriteLatency[0] << endl;
     ptl_logfile << "Marss total write latency for process : " << ((MemoryController*)memoryController_)->totalWriteLatency[1] << endl;
+    
+    // scyu: add differential write information 
+    ptl_logfile << "Marss total write failed to count different bits : " << ((MemoryController*)memoryController_)->totalPageFaultCount << endl;
+    ptl_logfile << "Marss total bit set count : " << ((MemoryController*)memoryController_)->totalBitSetCount << endl;
+    ptl_logfile << "Marss total bit reset count : " << ((MemoryController*)memoryController_)->totalBitResetCount << endl;
 
     ptl_logfile << "Marss total read count : " << ((MemoryController*)memoryController_)->totalReadCount << endl;
     ptl_logfile << "Marss total read latency for wait : " << ((MemoryController*)memoryController_)->totalReadLatency[0] << endl;
@@ -144,6 +149,9 @@ void MemoryHierarchy::printDramStatsByMarss()
 void MemoryHierarchy::reset()
 {
 	eventQueue_.reset();
+    // scyu: add differential write information 
+    //       a map structure for recording the previous data value
+    prevData_.clear();
 }
 
 int MemoryHierarchy::flush(uint8_t coreid)

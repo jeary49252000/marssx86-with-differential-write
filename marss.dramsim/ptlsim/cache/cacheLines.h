@@ -38,21 +38,34 @@ namespace Memory {
         /* This is a generic variable used by all caches to represent its
          * coherence state */
         W8 state;
+        // scyu: add differential write information 
+        //     : store data in cache
+        W64 data;
 
         void init(W64 tag_t) {
             tag = tag_t;
             if (tag == (W64)-1) state = 0;
         }
 
+        // scyu: add differential write information 
+        //     : store data in cache
+        void init(W64 tag_t, W64 data_t) {
+            tag = tag_t;
+            data = data_t;
+            if (tag == (W64)-1) state = 0;
+        }
+
         void reset() {
             tag = -1;
             state = 0;
+            data = (W64) 0x5566; // scyu: magic number for INVALID
         }
 
         void invalidate() { reset(); }
 
         void print(ostream& os) const {
             os << "Cacheline: tag[", (void*)tag, "] ";
+            os << "data[", (void*)data, "] ";
             os << "state[", state, "] ";
         }
     };
@@ -80,15 +93,19 @@ namespace Memory {
             virtual CacheLine* probe(MemoryRequest *request)=0;
             virtual CacheLine* insert(MemoryRequest *request,
                     W64& oldTag)=0;
+            // scyu: add differential write information 
+            //     : store data in cache
+            virtual CacheLine* insert(MemoryRequest *request,
+                    W64 newData, W64& oldTag, W64& oldData)=0;
             virtual int invalidate(MemoryRequest *request)=0;
             virtual bool get_port(MemoryRequest *request)=0;
             virtual void print(ostream& os) const =0;
             virtual int get_line_bits() const=0;
             virtual int get_access_latency() const=0;
-			virtual int get_size() const=0;
-			virtual int get_set_count() const=0;
-			virtual int get_way_count() const=0;
-			virtual int get_line_size() const=0;
+            virtual int get_size() const=0;
+            virtual int get_set_count() const=0;
+            virtual int get_way_count() const=0;
+            virtual int get_line_size() const=0;
     };
 
     template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
@@ -116,45 +133,47 @@ namespace Memory {
             int latency() const { return LATENCY; };
             CacheLine* probe(MemoryRequest *request);
             CacheLine* insert(MemoryRequest *request, W64& oldTag);
+            // scyu: add differential write information 
+            CacheLine* insert(MemoryRequest *request, W64 newData, W64& oldTag, W64& oldData);
             int invalidate(MemoryRequest *request);
             bool get_port(MemoryRequest *request);
             void print(ostream& os) const;
 
-			/**
-			 * @brief Get Cache Size
-			 *
-			 * @return Size of Cache in bytes
-			 */
-			int get_size() const {
-				return (SET_COUNT * WAY_COUNT * LINE_SIZE);
-			}
+            /**
+             * @brief Get Cache Size
+             *
+             * @return Size of Cache in bytes
+             */
+            int get_size() const {
+                return (SET_COUNT * WAY_COUNT * LINE_SIZE);
+            }
 
-			/**
-			 * @brief Get Number of Sets in Cache
-			 *
-			 * @return Sets in Cache
-			 */
-			int get_set_count() const {
-				return SET_COUNT;
-			}
+            /**
+             * @brief Get Number of Sets in Cache
+             *
+             * @return Sets in Cache
+             */
+            int get_set_count() const {
+                return SET_COUNT;
+            }
 
-			/**
-			 * @brief Get Cache Lines per Set (Number of Ways)
-			 *
-			 * @return Number of Cache Lines in one Set
-			 */
-			int get_way_count() const {
-				return WAY_COUNT;
-			}
+            /**
+             * @brief Get Cache Lines per Set (Number of Ways)
+             *
+             * @return Number of Cache Lines in one Set
+             */
+            int get_way_count() const {
+                return WAY_COUNT;
+            }
 
-			/**
-			 * @brief Get number of bytes in a cache line
-			 *
-			 * @return Number of bytes in Cache Line
-			 */
-			int get_line_size() const {
-				return LINE_SIZE;
-			}
+            /**
+             * @brief Get number of bytes in a cache line
+             *
+             * @return Number of bytes in Cache Line
+             */
+            int get_line_size() const {
+                return LINE_SIZE;
+            }
 
             int get_line_bits() const {
                 return log2(LINE_SIZE);
@@ -227,6 +246,16 @@ namespace Memory {
             W64 physAddress = request->get_physical_address();
             CacheLine *line = base_t::select(physAddress, oldTag);
 
+            return line;
+        }
+    // scyu: add differential write information 
+    //     : store data in cache
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
+        CacheLine* CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::insert(MemoryRequest *request, 
+                W64 newData, W64& oldTag, W64& oldData)
+        {
+            W64 physAddress = request->get_physical_address();
+            CacheLine *line = base_t::select(physAddress, newData ,oldTag, oldData);
             return line;
         }
 

@@ -136,6 +136,10 @@ private:
     uint64_t totalRefreshCount;
     uint64_t totalRefreshLatency;
 
+    // scyu: add differential write information 
+    uint64_t totalBitSetCount;
+    uint64_t totalBitResetCount;
+
     map<int, int> writeIterDistribution;
     map<int, int> refreshIterDistribution;
 

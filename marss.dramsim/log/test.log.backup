@@ -1,0 +1,2182 @@
+//  
+//  MARSS: Cycle Accurate Systems simulator for x86
+//  Copyright 1999-2007 Matt T. Yourst <yourst@yourst.com>
+//  Copyright 2009-2011 Avadh Patel <avadh4all@gmail.com>
+// 
+//  Git branch 'master' on date UNKNOWN (HEAD: 0000000)
+//  Built Jul  5 2013 02:29:49 on BUILDHOST using gcc-4.4
+//  Running on eclab8.eclab
+//  
+
+Active parameters:
+  -help         disabled
+  -run          enabled
+  -stop         disabled
+  -kill         disabled
+  -flush        disabled
+  -quiet        disabled
+  -logfile      log/test.log
+  -loglevel     0
+  -startlog     0
+  -startlogrip  18446744073709551615
+  -consolelog   disabled
+  -logbufsize   524288
+  -logfilesize  268435456
+  -dump-state-now disabled
+  -screenshot   
+  -log-user-only disabled
+  -dump-config-file 
+  -stats        
+  -yamlstats    
+  -stats-format yaml
+  -snapshot-cycles infinity
+  -snapshot-now 
+  -time-stats-logfile 
+  -time-stats-period 10000
+  -startrip     18446744073709551615
+  -fast-fwd-insns 0
+  -fast-fwd-user-insns 0
+  -fast-fwd-checkpoint 
+  -stopinsns    1501 M
+  -stopcycle    infinity
+  -stopiter     infinity
+  -stoprip      18446744073709551615
+  -stop-at-marker infinity
+  -stop-at-marker-hits infinity
+  -stopinsns-rel infinity
+  -bbinsns      65536
+  -flushevery   infinity
+  -kill-after-run enabled
+  -event-record 
+  -event-record-stop disabled
+  -event-replay 
+  -corefreq     4 G
+  -enable-checker disabled
+  -checker-startrip 18446744073709551615
+  -perfect-cache disabled
+  -dumpcode     test.dat
+  -dump-at-end  disabled
+  -bbdump       
+  -verify-cache disabled
+  -machine      private_L3
+  -enable-mongo disabled
+  -mongo-server 127.0.0.1
+  -mongo-port   27017
+  -bench-name   
+  -tags         
+  -run-tests    disabled
+  -execute-after-kill 
+  -sync         0
+  -simpoint     
+  -simpoint-interval 10 M
+  -simpoint-chk-name simpoint
+  -dramsim-device-ini-file ini/Ini/w80_r80_b8.ini
+  -dramsim-pwd  ../DRAMSim2
+  -dramsim-system-ini-file ini/System/default.ini
+  -dramsim-results-dir-name log
+Configuration changed: Active parameters:
+  -help         disabled
+  -run          enabled
+  -stop         disabled
+  -kill         disabled
+  -flush        disabled
+  -quiet        disabled
+  -logfile      log/test.log
+  -loglevel     0
+  -startlog     0
+  -startlogrip  18446744073709551615
+  -consolelog   disabled
+  -logbufsize   524288
+  -logfilesize  268435456
+  -dump-state-now disabled
+  -screenshot   
+  -log-user-only disabled
+  -dump-config-file 
+  -stats        
+  -yamlstats    
+  -stats-format yaml
+  -snapshot-cycles infinity
+  -snapshot-now 
+  -time-stats-logfile 
+  -time-stats-period 10000
+  -startrip     18446744073709551615
+  -fast-fwd-insns 0
+  -fast-fwd-user-insns 0
+  -fast-fwd-checkpoint 
+  -stopinsns    1501 M
+  -stopcycle    infinity
+  -stopiter     infinity
+  -stoprip      18446744073709551615
+  -stop-at-marker infinity
+  -stop-at-marker-hits infinity
+  -stopinsns-rel infinity
+  -bbinsns      65536
+  -flushevery   infinity
+  -kill-after-run enabled
+  -event-record 
+  -event-record-stop disabled
+  -event-replay 
+  -corefreq     4 G
+  -enable-checker disabled
+  -checker-startrip 18446744073709551615
+  -perfect-cache disabled
+  -dumpcode     test.dat
+  -dump-at-end  disabled
+  -bbdump       
+  -verify-cache disabled
+  -machine      private_L3
+  -enable-mongo disabled
+  -mongo-server 127.0.0.1
+  -mongo-port   27017
+  -bench-name   
+  -tags         
+  -run-tests    disabled
+  -execute-after-kill 
+  -sync         0
+  -simpoint     
+  -simpoint-interval 10 M
+  -simpoint-chk-name simpoint
+  -dramsim-device-ini-file ini/Ini/w80_r80_b8.ini
+  -dramsim-pwd  ../DRAMSim2
+  -dramsim-system-ini-file ini/System/default.ini
+  -dramsim-results-dir-name log
+
+Initializing core 'base'
+ooo_ooo_ooo_ooo_#
+# Simulated Machine Configuration
+#
+---
+machine:
+  name: private_L3
+  cpu_contexts: 4
+  freq: 4000000000
+  ooo_0_0:
+    type: core
+    threads: 1
+    iq_size: 64
+    phys_reg_files: 4
+    phys_reg_file_int_size: 256
+    phys_reg_file_fp_size: 256
+    phys_reg_file_st_size: 48
+    phys_reg_file_br_size: 24
+    fetch_q_size: 48
+    frontend_stages: 4
+    itlb_size: 32
+    dtlb_size: 32
+    total_FUs: 8
+    int_FUs: 2
+    fp_FUs: 2
+    ld_FUs: 2
+    st_FUs: 2
+    frontend_width: 4
+    dispatch_width: 4
+    issue_width: 4
+    writeback_width: 4
+    commit_width: 4
+    max_branch_in_flight: 24
+    per_thread:
+      rob_size: 128
+      lsq_size: 96
+  ooo_1_1:
+    type: core
+    threads: 1
+    iq_size: 64
+    phys_reg_files: 4
+    phys_reg_file_int_size: 256
+    phys_reg_file_fp_size: 256
+    phys_reg_file_st_size: 48
+    phys_reg_file_br_size: 24
+    fetch_q_size: 48
+    frontend_stages: 4
+    itlb_size: 32
+    dtlb_size: 32
+    total_FUs: 8
+    int_FUs: 2
+    fp_FUs: 2
+    ld_FUs: 2
+    st_FUs: 2
+    frontend_width: 4
+    dispatch_width: 4
+    issue_width: 4
+    writeback_width: 4
+    commit_width: 4
+    max_branch_in_flight: 24
+    per_thread:
+      rob_size: 128
+      lsq_size: 96
+  ooo_2_2:
+    type: core
+    threads: 1
+    iq_size: 64
+    phys_reg_files: 4
+    phys_reg_file_int_size: 256
+    phys_reg_file_fp_size: 256
+    phys_reg_file_st_size: 48
+    phys_reg_file_br_size: 24
+    fetch_q_size: 48
+    frontend_stages: 4
+    itlb_size: 32
+    dtlb_size: 32
+    total_FUs: 8
+    int_FUs: 2
+    fp_FUs: 2
+    ld_FUs: 2
+    st_FUs: 2
+    frontend_width: 4
+    dispatch_width: 4
+    issue_width: 4
+    writeback_width: 4
+    commit_width: 4
+    max_branch_in_flight: 24
+    per_thread:
+      rob_size: 128
+      lsq_size: 96
+  ooo_3_3:
+    type: core
+    threads: 1
+    iq_size: 64
+    phys_reg_files: 4
+    phys_reg_file_int_size: 256
+    phys_reg_file_fp_size: 256
+    phys_reg_file_st_size: 48
+    phys_reg_file_br_size: 24
+    fetch_q_size: 48
+    frontend_stages: 4
+    itlb_size: 32
+    dtlb_size: 32
+    total_FUs: 8
+    int_FUs: 2
+    fp_FUs: 2
+    ld_FUs: 2
+    st_FUs: 2
+    frontend_width: 4
+    dispatch_width: 4
+    issue_width: 4
+    writeback_width: 4
+    commit_width: 4
+    max_branch_in_flight: 24
+    per_thread:
+      rob_size: 128
+      lsq_size: 96
+  core_0_cont:
+  # This is a software related structure which has no relevence to any hardware module.
+    type: core_controller
+    pending_queue_size: 128
+    icache_buffer_size: 32
+  core_1_cont:
+  # This is a software related structure which has no relevence to any hardware module.
+    type: core_controller
+    pending_queue_size: 128
+    icache_buffer_size: 32
+  core_2_cont:
+  # This is a software related structure which has no relevence to any hardware module.
+    type: core_controller
+    pending_queue_size: 128
+    icache_buffer_size: 32
+  core_3_cont:
+  # This is a software related structure which has no relevence to any hardware module.
+    type: core_controller
+    pending_queue_size: 128
+    icache_buffer_size: 32
+  L1_I_0:
+    type: cache
+    size: 32768
+    sets: 128
+    ways: 4
+    line_size: 64
+    latency: 2
+    pending_queue_size: 256
+    coherence: MESI
+  L1_I_1:
+    type: cache
+    size: 32768
+    sets: 128
+    ways: 4
+    line_size: 64
+    latency: 2
+    pending_queue_size: 256
+    coherence: MESI
+  L1_I_2:
+    type: cache
+    size: 32768
+    sets: 128
+    ways: 4
+    line_size: 64
+    latency: 2
+    pending_queue_size: 256
+    coherence: MESI
+  L1_I_3:
+    type: cache
+    size: 32768
+    sets: 128
+    ways: 4
+    line_size: 64
+    latency: 2
+    pending_queue_size: 256
+    coherence: MESI
+  L1_D_0:
+    type: cache
+    size: 32768
+    sets: 128
+    ways: 4
+    line_size: 64
+    latency: 2
+    pending_queue_size: 256
+    coherence: MESI
+  L1_D_1:
+    type: cache
+    size: 32768
+    sets: 128
+    ways: 4
+    line_size: 64
+    latency: 2
+    pending_queue_size: 256
+    coherence: MESI
+  L1_D_2:
+    type: cache
+    size: 32768
+    sets: 128
+    ways: 4
+    line_size: 64
+    latency: 2
+    pending_queue_size: 256
+    coherence: MESI
+  L1_D_3:
+    type: cache
+    size: 32768
+    sets: 128
+    ways: 4
+    line_size: 64
+    latency: 2
+    pending_queue_size: 256
+    coherence: MESI
+  L2_0:
+    type: cache
+    size: 2097152
+    sets: 8192
+    ways: 4
+    line_size: 64
+    latency: 10
+    pending_queue_size: 256
+    coherence: MESI
+  L2_1:
+    type: cache
+    size: 2097152
+    sets: 8192
+    ways: 4
+    line_size: 64
+    latency: 10
+    pending_queue_size: 256
+    coherence: MESI
+  L2_2:
+    type: cache
+    size: 2097152
+    sets: 8192
+    ways: 4
+    line_size: 64
+    latency: 10
+    pending_queue_size: 256
+    coherence: MESI
+  L2_3:
+    type: cache
+    size: 2097152
+    sets: 8192
+    ways: 4
+    line_size: 64
+    latency: 10
+    pending_queue_size: 256
+    coherence: MESI
+  L3_0:
+    type: cache
+    size: 33554432
+    sets: 65536
+    ways: 8
+    line_size: 64
+    latency: 200
+    pending_queue_size: 256
+    coherence: MESI
+  L3_1:
+    type: cache
+    size: 33554432
+    sets: 65536
+    ways: 8
+    line_size: 64
+    latency: 200
+    pending_queue_size: 256
+    coherence: MESI
+  L3_2:
+    type: cache
+    size: 33554432
+    sets: 65536
+    ways: 8
+    line_size: 64
+    latency: 200
+    pending_queue_size: 256
+    coherence: MESI
+  L3_3:
+    type: cache
+    size: 33554432
+    sets: 65536
+    ways: 8
+    line_size: 64
+    latency: 200
+    pending_queue_size: 256
+    coherence: MESI
+  MEM_0:
+    type: dram_cont
+    RAM_size: 8589934592
+    number_of_banks: 64
+    latency: 200
+    latency_ns: 50
+    pending_queue_size: 128
+  p2p_core_L1_I_0:
+    type: interconnect
+    latency: 0
+  p2p_core_L1_I_1:
+    type: interconnect
+    latency: 0
+  p2p_core_L1_I_2:
+    type: interconnect
+    latency: 0
+  p2p_core_L1_I_3:
+    type: interconnect
+    latency: 0
+  p2p_core_L1_D_0:
+    type: interconnect
+    latency: 0
+  p2p_core_L1_D_1:
+    type: interconnect
+    latency: 0
+  p2p_core_L1_D_2:
+    type: interconnect
+    latency: 0
+  p2p_core_L1_D_3:
+    type: interconnect
+    latency: 0
+  p2p_L1_I_L2_0:
+    type: interconnect
+    latency: 0
+  p2p_L1_I_L2_1:
+    type: interconnect
+    latency: 0
+  p2p_L1_I_L2_2:
+    type: interconnect
+    latency: 0
+  p2p_L1_I_L2_3:
+    type: interconnect
+    latency: 0
+  p2p_L1_D_L2_0:
+    type: interconnect
+    latency: 0
+  p2p_L1_D_L2_1:
+    type: interconnect
+    latency: 0
+  p2p_L1_D_L2_2:
+    type: interconnect
+    latency: 0
+  p2p_L1_D_L2_3:
+    type: interconnect
+    latency: 0
+  p2p_L3_L2_0:
+    type: interconnect
+    latency: 0
+  p2p_L3_L2_1:
+    type: interconnect
+    latency: 0
+  p2p_L3_L2_2:
+    type: interconnect
+    latency: 0
+  p2p_L3_L2_3:
+    type: interconnect
+    latency: 0
+  split_bus_00:
+    type: interconnect
+    latency: 6
+    arbitrate_latency: 1
+    per_cont_queue_size: 16
+
+# End Machine Configuration
+Dumped all machine configuration
+Start logging at level 0 in cycle 0
+Completed             0 cycles,             0 commits:         0 Hz,         0 insns/sec: rip 0000000000400a6f 00000000004023d8 00000000004022e9 0000000000402405
+read first : 0
+write first : 0
+request accept cnt : 0
+request reject cnt : 0
+current total write count : 0
+current total write latency : 0
+current average write latency : -nan
+current total read count : 0
+current total read latency : 0
+current average read latency : -nan
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 0
+Marss total write latency for wait : 0
+Marss total write latency for process : 0
+Marss total write failed to count different bits : 0
+Marss total bit set count : 0
+Marss total bit reset count : 0
+Marss total read count : 0
+Marss total read latency for wait : 0
+Marss total read latency for process : 0
+Invalid opcode at 0x400c26: split_invalid_basic_blocks 0, first_insn_in_bb? 0
+Invalid opcode at 0xffffffff8101c82a: split_invalid_basic_blocks 0, first_insn_in_bb? 0
+Completed       5003549 cycles,       1000003 commits:    513910 Hz,    102709 insns/sec: rip 00007f16516e7d70 000000000040240d 00000000004023fc 0000000000402413
+read first : 36332
+write first : 0
+request accept cnt : 109020
+request reject cnt : 0
+current total write count : 0
+current total write latency : 0
+current average write latency : -nan
+current total read count : 36332
+current total read latency : 11617062
+current average read latency : 319.747
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 0
+Marss total write latency for wait : 0
+Marss total write latency for process : 0
+Marss total write failed to count different bits : 0
+Marss total bit set count : 0
+Marss total bit reset count : 0
+Marss total read count : 36332
+Marss total read latency for wait : 217992
+Marss total read latency for process : 58204070
+Completed       9823492 cycles,       2000001 commits:    501387 Hz,    104023 insns/sec: rip 0000000000400722 000000000040240d 0000000000402413 00000000004022e0
+read first : 73070
+write first : 20
+request accept cnt : 219310
+request reject cnt : 0
+current total write count : 20
+current total write latency : 47056
+current average write latency : 2352.8
+current total read count : 73070
+current total read latency : 22870832
+current average read latency : 312.999
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 20
+Marss total write latency for wait : 72571
+Marss total write latency for process : 235329
+Marss total write failed to count different bits : 7
+Marss total bit set count : 84
+Marss total bit reset count : 167
+Marss total read count : 73070
+Marss total read latency for wait : 438420
+Marss total read latency for process : 114596472
+Completed      15799307 cycles,       3000000 commits:    540189 Hz,     90395 insns/sec: rip 0000000000400711 000000000040240d 0000000000400722 00000000004023d8
+read first : 118229
+write first : 27
+request accept cnt : 354805
+request reject cnt : 0
+current total write count : 27
+current total write latency : 58579
+current average write latency : 2169.59
+current total read count : 118226
+current total read latency : 36172606
+current average read latency : 305.962
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 27
+Marss total write latency for wait : 72613
+Marss total write latency for process : 292961
+Marss total write failed to count different bits : 7
+Marss total bit set count : 114
+Marss total bit reset count : 239
+Marss total read count : 118226
+Marss total read latency for wait : 709356
+Marss total read latency for process : 181256888
+Completed      22533119 cycles,       4000001 commits:    574767 Hz,     85355 insns/sec: rip 0000000000400722 00000000004021ed 0000000000400711 00000000004023fc
+read first : 166776
+write first : 27
+request accept cnt : 500444
+request reject cnt : 0
+current total write count : 27
+current total write latency : 58579
+current average write latency : 2169.59
+current total read count : 166776
+current total read latency : 50354361
+current average read latency : 301.928
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 27
+Marss total write latency for wait : 72613
+Marss total write latency for process : 292961
+Marss total write failed to count different bits : 7
+Marss total bit set count : 114
+Marss total bit reset count : 239
+Marss total read count : 166776
+Marss total read latency for wait : 1000656
+Marss total read latency for process : 252329824
+Completed      33000084 cycles,       5000001 commits:    654812 Hz,     62559 insns/sec: rip 0000000000400722 0000000000400722 0000000000400753 0000000000400722
+read first : 246990
+write first : 29
+request accept cnt : 741099
+request reject cnt : 0
+current total write count : 29
+current total write latency : 61554
+current average write latency : 2122.55
+current total read count : 246989
+current total read latency : 68494850
+current average read latency : 277.319
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 29
+Marss total write latency for wait : 219076
+Marss total write latency for process : 307844
+Marss total write failed to count different bits : 7
+Marss total bit set count : 114
+Marss total bit reset count : 246
+Marss total read count : 246989
+Marss total read latency for wait : 1481934
+Marss total read latency for process : 343306250
+Completed      44364918 cycles,       6000003 commits:    651908 Hz,     57362 insns/sec: rip 000000000040240d 0000000000400711 0000000000400722 0000000000400731
+read first : 331595
+write first : 38
+request accept cnt : 994939
+request reject cnt : 0
+current total write count : 38
+current total write latency : 68055
+current average write latency : 1790.92
+current total read count : 331595
+current total read latency : 88260133
+current average read latency : 266.168
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 38
+Marss total write latency for wait : 219130
+Marss total write latency for process : 340374
+Marss total write failed to count different bits : 12
+Marss total bit set count : 131
+Marss total bit reset count : 264
+Marss total read count : 331595
+Marss total read latency for wait : 1989570
+Marss total read latency for process : 442420347
+Completed      52629526 cycles,       7000001 commits:    598381 Hz,     72402 insns/sec: rip 00000000004021c6 0000000000400717 0000000000400722 00000000004006e3
+read first : 390308
+write first : 57
+request accept cnt : 1171132
+request reject cnt : 0
+current total write count : 57
+current total write latency : 100970
+current average write latency : 1771.4
+current total read count : 390308
+current total read latency : 103235217
+current average read latency : 264.497
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 57
+Marss total write latency for wait : 686264
+Marss total write latency for process : 505012
+Marss total write failed to count different bits : 17
+Marss total bit set count : 131
+Marss total bit reset count : 404
+Marss total read count : 390308
+Marss total read latency for wait : 2341848
+Marss total read latency for process : 517491753
+Completed      60808773 cycles,       8000006 commits:    587167 Hz,     71787 insns/sec: rip 00000000004023f1 0000000000400722 0000000000400722 0000000000400731
+read first : 447786
+write first : 62
+request accept cnt : 1343594
+request reject cnt : 0
+current total write count : 62
+current total write latency : 110394
+current average write latency : 1780.55
+current total read count : 447786
+current total read latency : 118078741
+current average read latency : 263.695
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 62
+Marss total write latency for wait : 686294
+Marss total write latency for process : 552146
+Marss total write failed to count different bits : 17
+Marss total bit set count : 180
+Marss total bit reset count : 446
+Marss total read count : 447786
+Marss total read latency for wait : 2686716
+Marss total read latency for process : 591901016
+Completed      68608071 cycles,       9000003 commits:    581961 Hz,     74616 insns/sec: rip 0000000000402213 0000000000400722 0000000000400711 0000000000400722
+read first : 503552
+write first : 64
+request accept cnt : 1510898
+request reject cnt : 0
+current total write count : 64
+current total write latency : 112638
+current average write latency : 1759.97
+current total read count : 503552
+current total read latency : 132372504
+current average read latency : 262.878
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 64
+Marss total write latency for wait : 686306
+Marss total write latency for process : 563376
+Marss total write failed to count different bits : 18
+Marss total bit set count : 180
+Marss total bit reset count : 498
+Marss total read count : 503552
+Marss total read latency for wait : 3021312
+Marss total read latency for process : 663557423
+Completed      76179768 cycles,      10000000 commits:    581610 Hz,     76813 insns/sec: rip 0000000000402410 0000000000400711 000000000040071b 000000000040071b
+read first : 558568
+write first : 67
+request accept cnt : 1675954
+request reject cnt : 0
+current total write count : 67
+current total write latency : 125190
+current average write latency : 1868.51
+current total read count : 558568
+current total read latency : 146177113
+current average read latency : 261.7
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 67
+Marss total write latency for wait : 686324
+Marss total write latency for process : 626151
+Marss total write failed to count different bits : 20
+Marss total bit set count : 180
+Marss total bit reset count : 498
+Marss total read count : 558568
+Marss total read latency for wait : 3351408
+Marss total read latency for process : 732766146
+Completed      84948054 cycles,      11000000 commits:    598722 Hz,     68282 insns/sec: rip 0000000000400722 0000000000400722 0000000000402400 0000000000400722
+read first : 622667
+write first : 84
+request accept cnt : 1868298
+request reject cnt : 0
+current total write count : 84
+current total write latency : 140004
+current average write latency : 1666.71
+current total read count : 622666
+current total read latency : 161391407
+current average read latency : 259.194
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 84
+Marss total write latency for wait : 781516
+Marss total write latency for process : 700281
+Marss total write failed to count different bits : 20
+Marss total bit set count : 209
+Marss total bit reset count : 688
+Marss total read count : 622666
+Marss total read latency for wait : 3735996
+Marss total read latency for process : 809054680
+Completed      89483503 cycles,      12000002 commits:    476800 Hz,    105127 insns/sec: rip 000000000040071b 00000000004023fc 00000000004023fc 0000000000402446
+read first : 656928
+write first : 93
+request accept cnt : 1971100
+request reject cnt : 0
+current total write count : 93
+current total write latency : 160760
+current average write latency : 1728.6
+current total read count : 656926
+current total read latency : 169862616
+current average read latency : 258.572
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 93
+Marss total write latency for wait : 863608
+Marss total write latency for process : 804092
+Marss total write failed to count different bits : 20
+Marss total bit set count : 236
+Marss total bit reset count : 705
+Marss total read count : 656926
+Marss total read latency for wait : 3941556
+Marss total read latency for process : 851521387
+Completed      92138440 cycles,      13000001 commits:    365459 Hz,    137652 insns/sec: rip 0000000000400722 000000000040240d 000000000040240d 0000000000402236
+read first : 680144
+write first : 102
+request accept cnt : 2040768
+request reject cnt : 0
+current total write count : 102
+current total write latency : 175709
+current average write latency : 1722.64
+current total read count : 680144
+current total read latency : 175526254
+current average read latency : 258.072
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 102
+Marss total write latency for wait : 863662
+Marss total write latency for process : 878878
+Marss total write failed to count different bits : 23
+Marss total bit set count : 257
+Marss total bit reset count : 758
+Marss total read count : 680144
+Marss total read latency for wait : 4080864
+Marss total read latency for process : 879910763
+Completed      94727156 cycles,      14000003 commits:    359374 Hz,    138823 insns/sec: rip 0000000000400722 00000000004023fc 00000000004023fc 00000000004023fc
+read first : 703333
+write first : 116
+request accept cnt : 2110363
+request reject cnt : 0
+current total write count : 116
+current total write latency : 193838
+current average write latency : 1671.02
+current total read count : 703333
+current total read latency : 181049385
+current average read latency : 257.416
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 116
+Marss total write latency for wait : 863746
+Marss total write latency for process : 969591
+Marss total write failed to count different bits : 25
+Marss total bit set count : 355
+Marss total bit reset count : 919
+Marss total read count : 703333
+Marss total read latency for wait : 4219998
+Marss total read latency for process : 907597599
+Completed      97360979 cycles,      15000001 commits:    365610 Hz,    138813 insns/sec: rip 0000000000400722 00000000004023fc 00000000004023fc 00000000004023fc
+read first : 726757
+write first : 139
+request accept cnt : 2180705
+request reject cnt : 0
+current total write count : 139
+current total write latency : 225349
+current average write latency : 1621.22
+current total read count : 726755
+current total read latency : 186756682
+current average read latency : 256.973
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 139
+Marss total write latency for wait : 872622
+Marss total write latency for process : 1127251
+Marss total write failed to count different bits : 28
+Marss total bit set count : 493
+Marss total bit reset count : 1030
+Marss total read count : 726755
+Marss total read latency for wait : 4360530
+Marss total read latency for process : 936206371
+Completed      99974817 cycles,      16000003 commits:    362869 Hz,    138826 insns/sec: rip 0000000000400711 0000000000402426 00000000004023fc 000000000040240d
+read first : 750146
+write first : 172
+request accept cnt : 2250922
+request reject cnt : 0
+current total write count : 172
+current total write latency : 252827
+current average write latency : 1469.92
+current total read count : 750144
+current total read latency : 192401419
+current average read latency : 256.486
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 172
+Marss total write latency for wait : 884041
+Marss total write latency for process : 1264800
+Marss total write failed to count different bits : 32
+Marss total bit set count : 726
+Marss total bit reset count : 1414
+Marss total read count : 750144
+Marss total read latency for wait : 4500864
+Marss total read latency for process : 964502259
+Completed     102574213 cycles,      17000002 commits:    360759 Hz,    138785 insns/sec: rip 0000000000400722 00000000004023fc 0000000000402446 0000000000402213
+read first : 773431
+write first : 212
+request accept cnt : 2320863
+request reject cnt : 0
+current total write count : 212
+current total write latency : 291748
+current average write latency : 1376.17
+current total read count : 773431
+current total read latency : 198006394
+current average read latency : 256.01
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 212
+Marss total write latency for wait : 884281
+Marss total write latency for process : 1459595
+Marss total write failed to count different bits : 40
+Marss total bit set count : 885
+Marss total bit reset count : 1821
+Marss total read count : 773431
+Marss total read latency for wait : 4640586
+Marss total read latency for process : 992599096
+Completed     105216034 cycles,      18000003 commits:    364275 Hz,    137888 insns/sec: rip 000000000040071b 00000000004023fc 00000000004023fc 000000000040225e
+read first : 796990
+write first : 276
+request accept cnt : 2391668
+request reject cnt : 0
+current total write count : 276
+current total write latency : 409860
+current average write latency : 1485
+current total read count : 796988
+current total read latency : 203723006
+current average read latency : 255.616
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 276
+Marss total write latency for wait : 884665
+Marss total write latency for process : 2050474
+Marss total write failed to count different bits : 54
+Marss total bit set count : 1384
+Marss total bit reset count : 2314
+Marss total read count : 796988
+Marss total read latency for wait : 4781928
+Marss total read latency for process : 1021255079
+Completed     107768004 cycles,      19000002 commits:    369882 Hz,    144939 insns/sec: rip 0000000000400722 0000000000402224 0000000000400722 00000000004021ac
+read first : 818384
+write first : 335
+request accept cnt : 2455958
+request reject cnt : 0
+current total write count : 335
+current total write latency : 490433
+current average write latency : 1463.98
+current total read count : 818384
+current total read latency : 208572529
+current average read latency : 254.859
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 335
+Marss total write latency for wait : 1119965
+Marss total write latency for process : 2453627
+Marss total write failed to count different bits : 63
+Marss total bit set count : 1554
+Marss total bit reset count : 2732
+Marss total read count : 818384
+Marss total read latency for wait : 4910304
+Marss total read latency for process : 1045569250
+Completed     110419361 cycles,      20000003 commits:    393135 Hz,    148277 insns/sec: rip 0000000000400722 00000000004023fc 0000000000400717 00000000004023f1
+read first : 837763
+write first : 356
+request accept cnt : 2514144
+request reject cnt : 0
+current total write count : 356
+current total write latency : 512077
+current average write latency : 1438.42
+current total read count : 837762
+current total read latency : 212662963
+current average read latency : 253.847
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 356
+Marss total write latency for wait : 1120091
+Marss total write latency for process : 2561950
+Marss total write failed to count different bits : 70
+Marss total bit set count : 1574
+Marss total bit reset count : 2747
+Marss total read count : 837762
+Marss total read latency for wait : 5026572
+Marss total read latency for process : 1066081907
+Completed     113059516 cycles,      21000001 commits:    406015 Hz,    153784 insns/sec: rip 0000000000400722 0000000000400722 000000000040070e 0000000000400711
+read first : 844495
+write first : 399
+request accept cnt : 2534413
+request reject cnt : 0
+current total write count : 399
+current total write latency : 622282
+current average write latency : 1559.6
+current total read count : 844495
+current total read latency : 214143798
+current average read latency : 253.576
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 399
+Marss total write latency for wait : 1120349
+Marss total write latency for process : 3113189
+Marss total write failed to count different bits : 82
+Marss total bit set count : 1739
+Marss total bit reset count : 3173
+Marss total read count : 844495
+Marss total read latency for wait : 5066970
+Marss total read latency for process : 1073507160
+Completed     115647017 cycles,      22000001 commits:    450253 Hz,    174011 insns/sec: rip 0000000000400722 0000000000400722 00000000004006e3 0000000000400722
+read first : 844719
+write first : 440
+request accept cnt : 2535167
+request reject cnt : 0
+current total write count : 440
+current total write latency : 629457
+current average write latency : 1430.58
+current total read count : 844719
+current total read latency : 214166275
+current average read latency : 253.536
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 440
+Marss total write latency for wait : 1120595
+Marss total write latency for process : 3149269
+Marss total write failed to count different bits : 98
+Marss total bit set count : 2092
+Marss total bit reset count : 3299
+Marss total read count : 844719
+Marss total read latency for wait : 5068314
+Marss total read latency for process : 1073620198
+Completed     117969184 cycles,      23000002 commits:    379807 Hz,    163557 insns/sec: rip 00000000004022f7 0000000000400722 0000000000400722 0000000000400722
+read first : 850586
+write first : 464
+request accept cnt : 2552816
+request reject cnt : 0
+current total write count : 464
+current total write latency : 640931
+current average write latency : 1381.32
+current total read count : 850586
+current total read latency : 214874940
+current average read latency : 252.62
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 464
+Marss total write latency for wait : 1120739
+Marss total write latency for process : 3206759
+Marss total write failed to count different bits : 98
+Marss total bit set count : 2463
+Marss total bit reset count : 3504
+Marss total read count : 850586
+Marss total read latency for wait : 5103516
+Marss total read latency for process : 1077180462
+Completed     119772869 cycles,      24000000 commits:    293865 Hz,    162924 insns/sec: rip 00000000004023fc 0000000000400722 00000000004023e5 0000000000400722
+read first : 863172
+write first : 473
+request accept cnt : 2590606
+request reject cnt : 0
+current total write count : 473
+current total write latency : 647646
+current average write latency : 1369.23
+current total read count : 863172
+current total read latency : 216444864
+current average read latency : 250.755
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 473
+Marss total write latency for wait : 1126187
+Marss total write latency for process : 3240379
+Marss total write failed to count different bits : 100
+Marss total bit set count : 2464
+Marss total bit reset count : 3601
+Marss total read count : 863172
+Marss total read latency for wait : 5179032
+Marss total read latency for process : 1085067402
+Completed     121702234 cycles,      25000002 commits:    313244 Hz,    162356 insns/sec: rip 00000000004023fc 0000000000400722 00000000004023da 0000000000400722
+read first : 875194
+write first : 494
+request accept cnt : 2626714
+request reject cnt : 0
+current total write count : 494
+current total write latency : 685391
+current average write latency : 1387.43
+current total read count : 875194
+current total read latency : 218506078
+current average read latency : 249.666
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 494
+Marss total write latency for wait : 1126313
+Marss total write latency for process : 3429187
+Marss total write failed to count different bits : 101
+Marss total bit set count : 2653
+Marss total bit reset count : 3734
+Marss total read count : 875194
+Marss total read latency for wait : 5251164
+Marss total read latency for process : 1095409054
+Completed     124033808 cycles,      26000002 commits:    336159 Hz,    144176 insns/sec: rip 0000000000402431 00000000004023fc 000000000040240d 00000000004023fc
+read first : 892993
+write first : 514
+request accept cnt : 2680165
+request reject cnt : 0
+current total write count : 514
+current total write latency : 808033
+current average write latency : 1572.05
+current total read count : 892993
+current total read latency : 223568557
+current average read latency : 250.359
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 514
+Marss total write latency for wait : 1135399
+Marss total write latency for process : 4042496
+Marss total write failed to count different bits : 107
+Marss total bit set count : 2746
+Marss total bit reset count : 3857
+Marss total read count : 892993
+Marss total read latency for wait : 5357958
+Marss total read latency for process : 1120773500
+Completed     126121073 cycles,      27000000 commits:    306528 Hz,    146856 insns/sec: rip 0000000000402269 00000000004023fc 00000000004023fc 00000000004020b9
+read first : 912643
+write first : 551
+request accept cnt : 2739182
+request reject cnt : 0
+current total write count : 551
+current total write latency : 969632
+current average write latency : 1759.77
+current total read count : 912642
+current total read latency : 228730692
+current average read latency : 250.625
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 551
+Marss total write latency for wait : 1160724
+Marss total write latency for process : 4850658
+Marss total write failed to count different bits : 112
+Marss total bit set count : 2873
+Marss total bit reset count : 4352
+Marss total read count : 912642
+Marss total read latency for wait : 5475852
+Marss total read latency for process : 1146643006
+Completed     128235699 cycles,      28000000 commits:    307572 Hz,    145449 insns/sec: rip 00000000004023fc 0000000000402416 00000000004023fc 00000000004023fc
+read first : 932625
+write first : 652
+request accept cnt : 2799346
+request reject cnt : 0
+current total write count : 652
+current total write latency : 1875885
+current average write latency : 2877.12
+current total read count : 932624
+current total read latency : 234100866
+current average read latency : 251.013
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 652
+Marss total write latency for wait : 1166355
+Marss total write latency for process : 9382416
+Marss total write failed to count different bits : 123
+Marss total bit set count : 3462
+Marss total bit reset count : 5528
+Marss total read count : 932624
+Marss total read latency for wait : 5595744
+Marss total read latency for process : 1173553674
+Completed     130397111 cycles,      29000000 commits:    313692 Hz,    145133 insns/sec: rip 000000000040240d 00000000004023fc 000000000040243f 00000000004023fc
+read first : 952477
+write first : 760
+request accept cnt : 2859122
+request reject cnt : 0
+current total write count : 760
+current total write latency : 2882828
+current average write latency : 3793.19
+current total read count : 952476
+current total read latency : 239447256
+current average read latency : 251.395
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 760
+Marss total write latency for wait : 1167003
+Marss total write latency for process : 14417648
+Marss total write failed to count different bits : 157
+Marss total bit set count : 3867
+Marss total bit reset count : 6418
+Marss total read count : 952476
+Marss total read latency for wait : 5714856
+Marss total read latency for process : 1200345099
+Completed     132508468 cycles,      30000002 commits:    309290 Hz,    146489 insns/sec: rip 00000000004023fc 0000000000402230 000000000040240d 00000000004023fc
+read first : 972532
+write first : 863
+request accept cnt : 2919480
+request reject cnt : 0
+current total write count : 863
+current total write latency : 3591488
+current average write latency : 4161.63
+current total read count : 972532
+current total read latency : 244619236
+current average read latency : 251.528
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 863
+Marss total write latency for wait : 1187437
+Marss total write latency for process : 17961453
+Marss total write failed to count different bits : 187
+Marss total bit set count : 4415
+Marss total bit reset count : 7324
+Marss total read count : 972532
+Marss total read latency for wait : 5835192
+Marss total read latency for process : 1226265258
+Completed     134665344 cycles,      31000002 commits:    310706 Hz,    144053 insns/sec: rip 00000000004023fc 00000000004023fc 0000000000402213 000000000040240d
+read first : 992268
+write first : 992
+request accept cnt : 2978964
+request reject cnt : 0
+current total write count : 992
+current total write latency : 4922768
+current average write latency : 4962.47
+current total read count : 992268
+current total read latency : 250011344
+current average read latency : 251.959
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 992
+Marss total write latency for wait : 1197355
+Marss total write latency for process : 24618480
+Marss total write failed to count different bits : 223
+Marss total bit set count : 4901
+Marss total bit reset count : 8763
+Marss total read count : 992268
+Marss total read latency for wait : 5953608
+Marss total read latency for process : 1253285433
+Completed     136847642 cycles,      32000005 commits:    315039 Hz,    144361 insns/sec: rip 000000000040240d 0000000000402426 00000000004021d1 0000000000401e84
+read first : 1012295
+write first : 1160
+request accept cnt : 3039378
+request reject cnt : 0
+current total write count : 1160
+current total write latency : 6717004
+current average write latency : 5790.52
+current total read count : 1012294
+current total read latency : 255520740
+current average read latency : 252.418
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 1160
+Marss total write latency for wait : 1247268
+Marss total write latency for process : 33590479
+Marss total write failed to count different bits : 269
+Marss total bit set count : 5592
+Marss total bit reset count : 9909
+Marss total read count : 1012294
+Marss total read latency for wait : 6073764
+Marss total read latency for process : 1280892284
+Completed     138937837 cycles,      33000001 commits:    309954 Hz,    148289 insns/sec: rip 0000000000400722 00000000004021e3 00000000004023fc 00000000004023fc
+read first : 1031812
+write first : 1318
+request accept cnt : 3098248
+request reject cnt : 0
+current total write count : 1318
+current total write latency : 7668991
+current average write latency : 5818.66
+current total read count : 1031812
+current total read latency : 260603726
+current average read latency : 252.569
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 1318
+Marss total write latency for wait : 1287401
+Marss total write latency for process : 38351181
+Marss total write failed to count different bits : 317
+Marss total bit set count : 6427
+Marss total bit reset count : 11265
+Marss total read count : 1031812
+Marss total read latency for wait : 6190872
+Marss total read latency for process : 1306365780
+Completed     140733422 cycles,      34000002 commits:    299847 Hz,    166991 insns/sec: rip 0000000000400722 00000000004021e3 0000000000402446 00000000004023fc
+read first : 1048047
+write first : 1485
+request accept cnt : 3147277
+request reject cnt : 0
+current total write count : 1485
+current total write latency : 8121674
+current average write latency : 5469.14
+current total read count : 1048047
+current total read latency : 263653961
+current average read latency : 251.567
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 1485
+Marss total write latency for wait : 1302413
+Marss total write latency for process : 40615415
+Marss total write failed to count different bits : 357
+Marss total bit set count : 7133
+Marss total bit reset count : 12819
+Marss total read count : 1048047
+Marss total read latency for wait : 6288282
+Marss total read latency for process : 1321665851
+Completed     142502321 cycles,      35000001 commits:    316517 Hz,    178934 insns/sec: rip 0000000000400722 000000000040240d 0000000000400722 000000000040225c
+read first : 1062230
+write first : 1653
+request accept cnt : 3190154
+request reject cnt : 0
+current total write count : 1653
+current total write latency : 8354870
+current average write latency : 5054.37
+current total read count : 1062230
+current total read latency : 265839807
+current average read latency : 250.266
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 1653
+Marss total write latency for wait : 1309199
+Marss total write latency for process : 41782217
+Marss total write failed to count different bits : 414
+Marss total bit set count : 7693
+Marss total bit reset count : 13928
+Marss total read count : 1062230
+Marss total read latency for wait : 6373380
+Marss total read latency for process : 1332637483
+Completed     144377296 cycles,      36000002 commits:    327582 Hz,    174713 insns/sec: rip 0000000000400753 0000000000400722 0000000000400722 000000000040240d
+read first : 1075404
+write first : 1827
+request accept cnt : 3230028
+request reject cnt : 0
+current total write count : 1827
+current total write latency : 8495041
+current average write latency : 4649.72
+current total read count : 1075404
+current total read latency : 267796197
+current average read latency : 249.019
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 1827
+Marss total write latency for wait : 1341789
+Marss total write latency for process : 42483921
+Marss total write failed to count different bits : 459
+Marss total bit set count : 8527
+Marss total bit reset count : 15127
+Marss total read count : 1075404
+Marss total read latency for wait : 6452424
+Marss total read latency for process : 1342459183
+Completed     146864568 cycles,      37000001 commits:    419006 Hz,    168460 insns/sec: rip 0000000000400722 0000000000400722 0000000000400722 0000000000400717
+read first : 1078486
+write first : 2038
+request accept cnt : 3239690
+request reject cnt : 0
+current total write count : 2038
+current total write latency : 8546181
+current average write latency : 4193.42
+current total read count : 1078486
+current total read latency : 268174683
+current average read latency : 248.658
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 2038
+Marss total write latency for wait : 1402890
+Marss total write latency for process : 42740668
+Marss total write failed to count different bits : 483
+Marss total bit set count : 9018
+Marss total bit reset count : 15631
+Marss total read count : 1078486
+Marss total read latency for wait : 6470916
+Marss total read latency for process : 1344360768
+Completed     149575709 cycles,      38000000 commits:    445090 Hz,    164170 insns/sec: rip 0000000000400722 0000000000400722 00000000004006e3 0000000000400722
+read first : 1079978
+write first : 2171
+request accept cnt : 3244432
+request reject cnt : 0
+current total write count : 2171
+current total write latency : 8568427
+current average write latency : 3946.77
+current total read count : 1079978
+current total read latency : 268326757
+current average read latency : 248.456
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 2171
+Marss total write latency for wait : 1403688
+Marss total write latency for process : 42852560
+Marss total write failed to count different bits : 521
+Marss total bit set count : 9314
+Marss total bit reset count : 16027
+Marss total read count : 1079978
+Marss total read latency for wait : 6479868
+Marss total read latency for process : 1345125565
+Completed     151841270 cycles,      39000002 commits:    362843 Hz,    160156 insns/sec: rip 0000000000402413 0000000000400722 0000000000400722 0000000000400731
+read first : 1087795
+write first : 2298
+request accept cnt : 3268143
+request reject cnt : 0
+current total write count : 2298
+current total write latency : 8622859
+current average write latency : 3752.33
+current total read count : 1087795
+current total read latency : 269309438
+current average read latency : 247.574
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 2298
+Marss total write latency for wait : 1408368
+Marss total write latency for process : 43125346
+Marss total write failed to count different bits : 535
+Marss total bit set count : 9663
+Marss total bit reset count : 16327
+Marss total read count : 1087795
+Marss total read latency for wait : 6526770
+Marss total read latency for process : 1350061829
+Completed     153954624 cycles,      40000002 commits:    347962 Hz,    164649 insns/sec: rip 00000000004023fc 0000000000400722 000000000040240d 0000000000400722
+read first : 1098204
+write first : 2350
+request accept cnt : 3299478
+request reject cnt : 0
+current total write count : 2350
+current total write latency : 8700705
+current average write latency : 3702.43
+current total read count : 1098204
+current total read latency : 270970278
+current average read latency : 246.739
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 2350
+Marss total write latency for wait : 1408680
+Marss total write latency for process : 43514835
+Marss total write failed to count different bits : 546
+Marss total bit set count : 10235
+Marss total bit reset count : 16700
+Marss total read count : 1098204
+Marss total read latency for wait : 6589224
+Marss total read latency for process : 1358397053
+Completed     155736899 cycles,      41000003 commits:    288952 Hz,    162125 insns/sec: rip 00000000004023eb 00000000004023fc 000000000040240d 0000000000400722
+read first : 1111894
+write first : 2406
+request accept cnt : 3340670
+request reject cnt : 0
+current total write count : 2406
+current total write latency : 8727119
+current average write latency : 3627.23
+current total read count : 1111894
+current total read latency : 272814672
+current average read latency : 245.36
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 2406
+Marss total write latency for wait : 1417076
+Marss total write latency for process : 43647183
+Marss total write failed to count different bits : 553
+Marss total bit set count : 10486
+Marss total bit reset count : 17419
+Marss total read count : 1111894
+Marss total read latency for wait : 6671364
+Marss total read latency for process : 1367659678
+Completed     157920116 cycles,      42000002 commits:    316273 Hz,    144865 insns/sec: rip 0000000000402413 0000000000402230 00000000004022dd 000000000040240d
+read first : 1131284
+write first : 2488
+request accept cnt : 3398990
+request reject cnt : 0
+current total write count : 2488
+current total write latency : 9574512
+current average write latency : 3848.28
+current total read count : 1131284
+current total read latency : 278073205
+current average read latency : 245.803
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 2488
+Marss total write latency for wait : 1425881
+Marss total write latency for process : 47884543
+Marss total write failed to count different bits : 571
+Marss total bit set count : 11013
+Marss total bit reset count : 18120
+Marss total read count : 1131284
+Marss total read latency for wait : 6787704
+Marss total read latency for process : 1394009645
+Completed     160003780 cycles,      43000001 commits:    303844 Hz,    145821 insns/sec: rip 00000000004023fc 00000000004023fc 000000000040221f 00000000004021e3
+read first : 1151150
+write first : 2598
+request accept cnt : 3458808
+request reject cnt : 0
+current total write count : 2598
+current total write latency : 10398743
+current average write latency : 4002.6
+current total read count : 1151146
+current total read latency : 283311106
+current average read latency : 246.112
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 2598
+Marss total write latency for wait : 1443559
+Marss total write latency for process : 52006229
+Marss total write failed to count different bits : 596
+Marss total bit set count : 11559
+Marss total bit reset count : 19444
+Marss total read count : 1151146
+Marss total read latency for wait : 6906876
+Marss total read latency for process : 1420258479
+Completed     162274359 cycles,      44000001 commits:    322938 Hz,    142227 insns/sec: rip 000000000040221a 00000000004023fc 00000000004023fc 00000000004023fc
+read first : 1171252
+write first : 2785
+request accept cnt : 3519513
+request reject cnt : 0
+current total write count : 2785
+current total write latency : 12537620
+current average write latency : 4501.84
+current total read count : 1171251
+current total read latency : 289074899
+current average read latency : 246.809
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 2785
+Marss total write latency for wait : 1510884
+Marss total write latency for process : 62701504
+Marss total write failed to count different bits : 642
+Marss total bit set count : 12421
+Marss total bit reset count : 21510
+Marss total read count : 1171251
+Marss total read latency for wait : 7027506
+Marss total read latency for process : 1449137837
+Completed     164397572 cycles,      45000002 commits:    309572 Hz,    145803 insns/sec: rip 00000000004021bc 0000000000402410 000000000040240d 00000000004023fc
+read first : 1191245
+write first : 2966
+request accept cnt : 3579861
+request reject cnt : 0
+current total write count : 2966
+current total write latency : 13977022
+current average write latency : 4712.41
+current total read count : 1191245
+current total read latency : 294360829
+current average read latency : 247.104
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 2966
+Marss total write latency for wait : 1523441
+Marss total write latency for process : 69899388
+Marss total write failed to count different bits : 690
+Marss total bit set count : 13368
+Marss total bit reset count : 23187
+Marss total read count : 1191245
+Marss total read latency for wait : 7147470
+Marss total read latency for process : 1475627633
+Completed     166496358 cycles,      46000000 commits:    307799 Hz,    146655 insns/sec: rip 0000000000402403 00000000004023fc 00000000004023fc 00000000004023fc
+read first : 1211159
+write first : 3219
+request accept cnt : 3640121
+request reject cnt : 0
+current total write count : 3219
+current total write latency : 15572877
+current average write latency : 4837.8
+current total read count : 1211157
+current total read latency : 299586942
+current average read latency : 247.356
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 3219
+Marss total write latency for wait : 1584831
+Marss total write latency for process : 77879877
+Marss total write failed to count different bits : 750
+Marss total bit set count : 14475
+Marss total bit reset count : 25623
+Marss total read count : 1211157
+Marss total read latency for wait : 7266942
+Marss total read latency for process : 1501818300
+Completed     168641600 cycles,      47000000 commits:    311688 Hz,    145293 insns/sec: rip 00000000004023fc 00000000004023fc 0000000000402216 0000000000402310
+read first : 1231071
+write first : 3519
+request accept cnt : 3700434
+request reject cnt : 0
+current total write count : 3519
+current total write latency : 18475587
+current average write latency : 5250.24
+current total read count : 1231068
+current total read latency : 305000216
+current average read latency : 247.753
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 3519
+Marss total write latency for wait : 1643319
+Marss total write latency for process : 92394887
+Marss total write failed to count different bits : 822
+Marss total bit set count : 15752
+Marss total bit reset count : 28440
+Marss total read count : 1231068
+Marss total read latency for wait : 7386408
+Marss total read latency for process : 1528944672
+Completed     171159638 cycles,      48000002 commits:    340056 Hz,    135048 insns/sec: rip 00000000004023f1 00000000004023fc 00000000004023fc 00000000004023fc
+read first : 1251035
+write first : 3811
+request accept cnt : 3760940
+request reject cnt : 0
+current total write count : 3811
+current total write latency : 21657281
+current average write latency : 5682.83
+current total read count : 1251034
+current total read latency : 311529147
+current average read latency : 249.017
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 3811
+Marss total write latency for wait : 1705585
+Marss total write latency for process : 108304792
+Marss total write failed to count different bits : 891
+Marss total bit set count : 17139
+Marss total bit reset count : 31392
+Marss total read count : 1251034
+Marss total read latency for wait : 7506204
+Marss total read latency for process : 1561649274
+Completed     173199097 cycles,      49000001 commits:    311902 Hz,    152933 insns/sec: rip 0000000000400722 0000000000402413 00000000004023fc 00000000004021e3
+read first : 1269029
+write first : 4073
+request accept cnt : 3815418
+request reject cnt : 0
+current total write count : 4073
+current total write latency : 23700599
+current average write latency : 5818.95
+current total read count : 1269028
+current total read latency : 315943982
+current average read latency : 248.965
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 4073
+Marss total write latency for wait : 1747774
+Marss total write latency for process : 118522648
+Marss total write failed to count different bits : 937
+Marss total bit set count : 18607
+Marss total bit reset count : 33875
+Marss total read count : 1269028
+Marss total read latency for wait : 7614168
+Marss total read latency for process : 1583778101
+Completed     175103048 cycles,      50000000 commits:    310021 Hz,    162830 insns/sec: rip 0000000000400722 00000000004023fc 000000000040240d 000000000040240d
+read first : 1285170
+write first : 4355
+request accept cnt : 3864425
+request reject cnt : 0
+current total write count : 4355
+current total write latency : 24555089
+current average write latency : 5638.37
+current total read count : 1285169
+current total read latency : 319313960
+current average read latency : 248.461
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 4355
+Marss total write latency for wait : 1786776
+Marss total write latency for process : 122796462
+Marss total write failed to count different bits : 1004
+Marss total bit set count : 20037
+Marss total bit reset count : 36479
+Marss total read count : 1285169
+Marss total read latency for wait : 7711014
+Marss total read latency for process : 1600676415
+Invalid opcode at 0xffffffff8101186f: split_invalid_basic_blocks 0, first_insn_in_bb? 0
+Completed     177041852 cycles,      51000002 commits:    318442 Hz,    164247 insns/sec: rip 0000000000400722 00000000004023fc 0000000000400722 00000000004023fc
+read first : 1300761
+write first : 4742
+request accept cnt : 3911960
+request reject cnt : 0
+current total write count : 4742
+current total write latency : 25297224
+current average write latency : 5334.72
+current total read count : 1300760
+current total read latency : 322192662
+current average read latency : 247.696
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 4742
+Marss total write latency for wait : 1914775
+Marss total write latency for process : 126509023
+Marss total write failed to count different bits : 1117
+Marss total bit set count : 21621
+Marss total bit reset count : 39593
+Marss total read count : 1300760
+Marss total read latency for wait : 7804560
+Marss total read latency for process : 1615117245
+Completed     179010878 cycles,      52000001 commits:    325740 Hz,    165432 insns/sec: rip 0000000000400722 0000000000400722 0000000000400722 00000000004023f1
+read first : 1313624
+write first : 5091
+request accept cnt : 3951244
+request reject cnt : 0
+current total write count : 5091
+current total write latency : 25673236
+current average write latency : 5042.87
+current total read count : 1313624
+current total read latency : 324147206
+current average read latency : 246.758
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 5091
+Marss total write latency for wait : 1962537
+Marss total write latency for process : 128390794
+Marss total write failed to count different bits : 1200
+Marss total bit set count : 23054
+Marss total bit reset count : 42290
+Marss total read count : 1313624
+Marss total read latency for wait : 7881744
+Marss total read latency for process : 1624928764
+Completed     181561216 cycles,      53000000 commits:    447208 Hz,    175352 insns/sec: rip 0000000000400722 0000000000400722 0000000000400722 0000000000400725
+read first : 1317062
+write first : 5418
+request accept cnt : 3962208
+request reject cnt : 0
+current total write count : 5418
+current total write latency : 25747793
+current average write latency : 4752.27
+current total read count : 1317062
+current total read latency : 324579811
+current average read latency : 246.442
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 5418
+Marss total write latency for wait : 2082777
+Marss total write latency for process : 128765204
+Marss total write failed to count different bits : 1244
+Marss total bit set count : 23446
+Marss total bit reset count : 43203
+Marss total read count : 1317062
+Marss total read latency for wait : 7902372
+Marss total read latency for process : 1627102067
+Completed     184212959 cycles,      54000000 commits:    418103 Hz,    157671 insns/sec: rip 0000000000402413 0000000000400722 0000000000400722 0000000000400711
+read first : 1321666
+write first : 5681
+request accept cnt : 3976560
+request reject cnt : 0
+current total write count : 5681
+current total write latency : 25818863
+current average write latency : 4544.77
+current total read count : 1321666
+current total read latency : 325160474
+current average read latency : 246.023
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 5681
+Marss total write latency for wait : 2147395
+Marss total write latency for process : 129121866
+Marss total write failed to count different bits : 1316
+Marss total bit set count : 23882
+Marss total bit reset count : 43746
+Marss total read count : 1321666
+Marss total read latency for wait : 7929996
+Marss total read latency for process : 1630018937
+Completed     186567346 cycles,      55000000 commits:    357982 Hz,    152049 insns/sec: rip 0000000000402403 0000000000400722 0000000000400722 0000000000400722
+read first : 1332256
+write first : 5911
+request accept cnt : 4008780
+request reject cnt : 0
+current total write count : 5911
+current total write latency : 25926154
+current average write latency : 4386.09
+current total read count : 1332256
+current total read latency : 326663382
+current average read latency : 245.196
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 5911
+Marss total write latency for wait : 2219331
+Marss total write latency for process : 129659459
+Marss total write failed to count different bits : 1350
+Marss total bit set count : 24546
+Marss total bit reset count : 44506
+Marss total read count : 1332256
+Marss total read latency for wait : 7993536
+Marss total read latency for process : 1637564906
+Completed     188758810 cycles,      56000003 commits:    364254 Hz,    166215 insns/sec: rip 000000000040243f 0000000000400722 0000000000400722 0000000000400722
+read first : 1341610
+write first : 6027
+request accept cnt : 4037076
+request reject cnt : 0
+current total write count : 6027
+current total write latency : 26009447
+current average write latency : 4315.49
+current total read count : 1341610
+current total read latency : 327923602
+current average read latency : 244.425
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 6027
+Marss total write latency for wait : 2220027
+Marss total write latency for process : 130076498
+Marss total write failed to count different bits : 1368
+Marss total bit set count : 25293
+Marss total bit reset count : 45285
+Marss total read count : 1341610
+Marss total read latency for wait : 8049660
+Marss total read latency for process : 1643893663
+Completed     190875601 cycles,      57000002 commits:    325500 Hz,    153770 insns/sec: rip 00000000004023fc 0000000000402403 000000000040240d 0000000000400722
+read first : 1355265
+write first : 6141
+request accept cnt : 4078286
+request reject cnt : 0
+current total write count : 6141
+current total write latency : 26203306
+current average write latency : 4266.94
+current total read count : 1355264
+current total read latency : 330539692
+current average read latency : 243.893
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 6141
+Marss total write latency for wait : 2313712
+Marss total write latency for process : 131046349
+Marss total write failed to count different bits : 1389
+Marss total bit set count : 25674
+Marss total bit reset count : 46371
+Marss total read count : 1355264
+Marss total read latency for wait : 8131584
+Marss total read latency for process : 1657014668
+Completed     193183251 cycles,      58000002 commits:    326989 Hz,    141697 insns/sec: rip 00000000004023fc 00000000004023fc 0000000000401e41 000000000040240d
+read first : 1375006
+write first : 6299
+request accept cnt : 4137830
+request reject cnt : 0
+current total write count : 6299
+current total write latency : 27447840
+current average write latency : 4357.49
+current total read count : 1375004
+current total read latency : 336393378
+current average read latency : 244.649
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 6299
+Marss total write latency for wait : 2339960
+Marss total write latency for process : 137269795
+Marss total write failed to count different bits : 1423
+Marss total bit set count : 26172
+Marss total bit reset count : 48201
+Marss total read count : 1375004
+Marss total read latency for wait : 8250024
+Marss total read latency for process : 1686341683
+Completed     195325211 cycles,      59000000 commits:    309619 Hz,    144549 insns/sec: rip 000000000040241c 00000000004023fc 000000000040240d 00000000004023fc
+read first : 1394874
+write first : 6507
+request accept cnt : 4197852
+request reject cnt : 0
+current total write count : 6507
+current total write latency : 29069703
+current average write latency : 4467.45
+current total read count : 1394874
+current total read latency : 341775018
+current average read latency : 245.022
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 6507
+Marss total write latency for wait : 2359149
+Marss total write latency for process : 145380115
+Marss total write failed to count different bits : 1461
+Marss total bit set count : 27402
+Marss total bit reset count : 50566
+Marss total read count : 1394874
+Marss total read latency for wait : 8369244
+Marss total read latency for process : 1713308981
+Completed     197738712 cycles,      60000002 commits:    333421 Hz,    138148 insns/sec: rip 00000000004023fc 00000000004023fc 0000000000402413 000000000040240d
+read first : 1414692
+write first : 6794
+request accept cnt : 4257880
+request reject cnt : 0
+current total write count : 6794
+current total write latency : 32401547
+current average write latency : 4769.14
+current total read count : 1414692
+current total read latency : 348103167
+current average read latency : 246.063
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 6794
+Marss total write latency for wait : 2492755
+Marss total write latency for process : 162040739
+Marss total write failed to count different bits : 1524
+Marss total bit set count : 28714
+Marss total bit reset count : 53623
+Marss total read count : 1414692
+Marss total read latency for wait : 8488152
+Marss total read latency for process : 1745009518
+Completed     199933074 cycles,      61000000 commits:    312111 Hz,    142233 insns/sec: rip 000000000040241a 00000000004023fc 00000000004023fc 00000000004023fc
+read first : 1434883
+write first : 7162
+request accept cnt : 4319210
+request reject cnt : 0
+current total write count : 7162
+current total write latency : 35686335
+current average write latency : 4982.73
+current total read count : 1434882
+current total read latency : 353699588
+current average read latency : 246.501
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 7162
+Marss total write latency for wait : 2590590
+Marss total write latency for process : 178466453
+Marss total write failed to count different bits : 1627
+Marss total bit set count : 30495
+Marss total bit reset count : 56526
+Marss total read count : 1434882
+Marss total read latency for wait : 8609292
+Marss total read latency for process : 1773052443
+Completed     202108086 cycles,      62000003 commits:    309266 Hz,    142191 insns/sec: rip 00000000004021c6 0000000000402413 00000000004023fc 00000000004023fc
+read first : 1454776
+write first : 7595
+request accept cnt : 4379739
+request reject cnt : 0
+current total write count : 7595
+current total write latency : 42102652
+current average write latency : 5543.47
+current total read count : 1454773
+current total read latency : 359266414
+current average read latency : 246.957
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 7595
+Marss total write latency for wait : 2675612
+Marss total write latency for process : 210550141
+Marss total write failed to count different bits : 1709
+Marss total bit set count : 33051
+Marss total bit reset count : 61222
+Marss total read count : 1454773
+Marss total read latency for wait : 8728638
+Marss total read latency for process : 1800946506
+Completed     204723287 cycles,      63000001 commits:    347901 Hz,    133030 insns/sec: rip 0000000000401e84 000000000040240d 00000000004022e0 00000000004023fc
+read first : 1474792
+write first : 8118
+request accept cnt : 4440836
+request reject cnt : 0
+current total write count : 8118
+current total write latency : 48443055
+current average write latency : 5967.36
+current total read count : 1474792
+current total read latency : 365990175
+current average read latency : 248.164
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 8118
+Marss total write latency for wait : 2803678
+Marss total write latency for process : 242254695
+Marss total write failed to count different bits : 1833
+Marss total bit set count : 35492
+Marss total bit reset count : 66477
+Marss total read count : 1474792
+Marss total read latency for wait : 8848752
+Marss total read latency for process : 1834625770
+Completed     206916429 cycles,      64000000 commits:    321512 Hz,    146598 insns/sec: rip 0000000000400722 0000000000402400 00000000004023d8 00000000004021c6
+read first : 1493182
+write first : 8546
+request accept cnt : 4496846
+request reject cnt : 0
+current total write count : 8546
+current total write latency : 52067712
+current average write latency : 6092.64
+current total read count : 1493182
+current total read latency : 370963583
+current average read latency : 248.438
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 8546
+Marss total write latency for wait : 2900281
+Marss total write latency for process : 260380072
+Marss total write failed to count different bits : 1924
+Marss total bit set count : 37764
+Marss total bit reset count : 70969
+Marss total read count : 1493182
+Marss total read latency for wait : 8959092
+Marss total read latency for process : 1859548154
+Completed     208872501 cycles,      65000002 commits:    312034 Hz,    159521 insns/sec: rip 0000000000400722 0000000000402413 0000000000401e20 00000000004022ff
+read first : 1509135
+write first : 8953
+request accept cnt : 4545510
+request reject cnt : 0
+current total write count : 8953
+current total write latency : 53473787
+current average write latency : 5972.72
+current total read count : 1509134
+current total read latency : 374400154
+current average read latency : 248.089
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 8953
+Marss total write latency for wait : 3019408
+Marss total write latency for process : 267412433
+Marss total write failed to count different bits : 1996
+Marss total bit set count : 39442
+Marss total bit reset count : 75499
+Marss total read count : 1509134
+Marss total read latency for wait : 9054804
+Marss total read latency for process : 1876778977
+Completed     210805442 cycles,      66000000 commits:    308434 Hz,    159566 insns/sec: rip 0000000000400722 00000000004023fc 00000000004023fc 00000000004023e5
+read first : 1525455
+write first : 9381
+request accept cnt : 4595333
+request reject cnt : 0
+current total write count : 9381
+current total write latency : 54866967
+current average write latency : 5848.73
+current total read count : 1525455
+current total read latency : 377702272
+current average read latency : 247.6
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 9381
+Marss total write latency for wait : 3099827
+Marss total write latency for process : 274380418
+Marss total write failed to count different bits : 2104
+Marss total bit set count : 42339
+Marss total bit reset count : 79814
+Marss total read count : 1525455
+Marss total read latency for wait : 9152730
+Marss total read latency for process : 1893338641
+Completed     212503872 cycles,      67000001 commits:    282271 Hz,    166195 insns/sec: rip 0000000000400722 0000000000402314 000000000040226b 00000000004023fc
+read first : 1536537
+write first : 9745
+request accept cnt : 4629299
+request reject cnt : 0
+current total write count : 9745
+current total write latency : 55489559
+current average write latency : 5694.16
+current total read count : 1536537
+current total read latency : 379861438
+current average read latency : 247.219
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 9745
+Marss total write latency for wait : 3154225
+Marss total write latency for process : 277495158
+Marss total write failed to count different bits : 2178
+Marss total bit set count : 44375
+Marss total bit reset count : 83856
+Marss total read count : 1536537
+Marss total read latency for wait : 9219222
+Marss total read latency for process : 1904167795
+Completed     214275261 cycles,      68000000 commits:    314468 Hz,    177526 insns/sec: rip 0000000000400722 0000000000400722 0000000000400722 0000000000400722
+read first : 1542289
+write first : 10100
+request accept cnt : 4647265
+request reject cnt : 0
+current total write count : 10100
+current total write latency : 55666757
+current average write latency : 5511.56
+current total read count : 1542289
+current total read latency : 380794751
+current average read latency : 246.902
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 10100
+Marss total write latency for wait : 3166990
+Marss total write latency for process : 278382897
+Marss total write failed to count different bits : 2248
+Marss total bit set count : 46145
+Marss total bit reset count : 86503
+Marss total read count : 1542289
+Marss total read latency for wait : 9253734
+Marss total read latency for process : 1908851780
+Completed     216847905 cycles,      69000003 commits:    474562 Hz,    184465 insns/sec: rip 0000000000400722 0000000000400760 0000000000400711 0000000000400722
+read first : 1545547
+write first : 10441
+request accept cnt : 4657743
+request reject cnt : 0
+current total write count : 10441
+current total write latency : 55726839
+current average write latency : 5337.31
+current total read count : 1545547
+current total read latency : 381146973
+current average read latency : 246.61
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 10441
+Marss total write latency for wait : 3394355
+Marss total write latency for process : 278684998
+Marss total write failed to count different bits : 2272
+Marss total bit set count : 46629
+Marss total bit reset count : 87053
+Marss total read count : 1545547
+Marss total read latency for wait : 9273282
+Marss total read latency for process : 1910622541
+Completed     219339465 cycles,      70000000 commits:    398167 Hz,    159805 insns/sec: rip 00000000004023fc 0000000000400722 0000000000400711 0000000000400722
+read first : 1553346
+write first : 10714
+request accept cnt : 4681681
+request reject cnt : 0
+current total write count : 10714
+current total write latency : 55818016
+current average write latency : 5209.82
+current total read count : 1553345
+current total read latency : 382183696
+current average read latency : 246.039
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 10714
+Marss total write latency for wait : 3406118
+Marss total write latency for process : 279142238
+Marss total write failed to count different bits : 2335
+Marss total bit set count : 47178
+Marss total bit reset count : 87821
+Marss total read count : 1553345
+Marss total read latency for wait : 9320070
+Marss total read latency for process : 1915829204
+Completed     221743222 cycles,      71000002 commits:    350671 Hz,    145885 insns/sec: rip 00000000004023fc 0000000000400715 0000000000400722 0000000000400749
+read first : 1563716
+write first : 10966
+request accept cnt : 4713300
+request reject cnt : 0
+current total write count : 10966
+current total write latency : 55944037
+current average write latency : 5101.59
+current total read count : 1563715
+current total read latency : 383667131
+current average read latency : 245.356
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 10966
+Marss total write latency for wait : 3428079
+Marss total write latency for process : 279773581
+Marss total write failed to count different bits : 2417
+Marss total bit set count : 48444
+Marss total bit reset count : 89831
+Marss total read count : 1563715
+Marss total read latency for wait : 9382290
+Marss total read latency for process : 1923277064
+Completed     223866299 cycles,      72000000 commits:    369773 Hz,    174168 insns/sec: rip 00000000004021df 0000000000400722 0000000000400722 0000000000400722
+read first : 1572348
+write first : 11092
+request accept cnt : 4739440
+request reject cnt : 0
+current total write count : 11092
+current total write latency : 56007859
+current average write latency : 5049.39
+current total read count : 1572348
+current total read latency : 384868641
+current average read latency : 244.773
+current total refresh count : 0
+current total refresh latency : 0
+current average refresh latency : -nan
+Marss total write count : 11092
+Marss total write latency for wait : 3508214
+Marss total write latency for process : 280093314
+Marss total write failed to count different bits : 2436
+Marss total bit set count : 49043
+Marss total bit reset count : 90712
+Marss total read count : 1572348
+Marss total read latency for wait : 9434088
+Marss total read latency for process : 1929310301

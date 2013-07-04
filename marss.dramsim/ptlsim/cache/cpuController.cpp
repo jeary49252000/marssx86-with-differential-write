@@ -156,8 +156,8 @@ int CPUController::access_fast_path(Interconnect *interconnect,
 {
 	int fastPathLat = 0;
     bool kernel_req = request->is_kernel();
-
-	if likely (interconnect == NULL) {
+	
+    if likely (interconnect == NULL) {
 		// From CPU
 		if unlikely (request->is_instruction()) {
 
