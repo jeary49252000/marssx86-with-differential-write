@@ -96,6 +96,10 @@ MemoryController::MemoryController(W8 coreid, const char *name,
     totalBitSetCount = 0;
     totalBitResetCount = 0;
     totalPageFaultCount = 0;
+
+    histBitSet.clear();
+    histBitReset.clear();
+    histBitChanged.clear();
 }
 
 /*
@@ -256,12 +260,15 @@ bool MemoryController::handle_interconnect_cb(void *arg)
             W64 set, reset;    
             for(set = 0, reset = 0; diff; diff >>= 1, prev_data >>= 1){
                 // scyu: not use if-else statement here for better(?) efficiency
-                reset += 1 & diff & prev_data;  // the original data of this modified bit is 1: reset 
-                set   += 1 & diff & !prev_data; // the original data of this modified bit is 0: set  
+                reset += 0x1 & diff &  prev_data; // the original data of this modified bit is 1: reset 
+                set   += 0x1 & diff & ~prev_data; // the original data of this modified bit is 0: set  
             }
             // update statistical infomation
             totalBitSetCount   += set;
             totalBitResetCount += reset;
+            histBitSet[set]++;
+            histBitReset[reset]++;
+            histBitChanged[set+reset]++;
         }
 
         // update the lookup map
@@ -300,6 +307,25 @@ void MemoryController::print(ostream& os) const
     os << "banksUsed_: ", banksUsed_, endl;
     os << "---End Memory-Controller: ", get_name(), endl;
 }
+
+// scyu: add differential write information
+//     : dump the statistical information
+void MemoryController::printDifferentialWriteInfo()
+{
+    stringbuf sb;
+    sb << "Differential wirte - # write requests:\t" << totalWriteCount << endl;
+    sb << "Differential wirte - # write with page fault / # total write:\t" << (double) totalPageFaultCount / totalWriteCount << endl;
+    sb << "Differential wirte - # set bits:\t" << totalBitSetCount << endl;
+    sb << "Differential wirte - # reset bits:\t" << totalBitResetCount << endl;
+    
+    // dump histograms
+    sb << "Differential wirte - histogram of changed bits:\t";
+    for(int i=0; i<=64; ++i){
+        sb << ((histBitChanged.count(i) > 0)? histBitChanged[i] : 0) << ", "; 
+    }
+    ptl_logfile << sb << endl;
+}
+
 #ifdef DRAMSIM
 void MemoryController::write_return_cb(uint id, uint64_t addr, uint64_t cycle)
 {

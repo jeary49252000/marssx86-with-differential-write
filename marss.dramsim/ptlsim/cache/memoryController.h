@@ -100,6 +100,9 @@ class MemoryController : public Controller
 		virtual bool handle_interconnect_cb(void *arg);
 		void print(ostream& os) const;
 
+        // scyu: add differential write information
+        void printDifferentialWriteInfo();
+
         virtual void register_interconnect(Interconnect *interconnect, int type);
 
 		virtual bool access_completed_cb(void *arg);
@@ -145,7 +148,10 @@ class MemoryController : public Controller
         // add statistical information
         W64 totalBitSetCount;
         W64 totalBitResetCount;
-        W64 totalPageFaultCount; // failed to get the set/rest information
+        W64 totalPageFaultCount;            // failed to get the set/rest information
+        std::map<W8, W64> histBitSet;      // # bit set each write
+        std::map<W8, W64> histBitReset;    // # bit reset each write
+        std::map<W8, W64> histBitChanged;  // # histBitSet + histBitReset
 };
 
 };

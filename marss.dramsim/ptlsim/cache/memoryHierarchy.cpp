@@ -122,6 +122,8 @@ void MemoryHierarchy::simulation_done()
 {
 	//do a final dump of statistics in DRAMSim which completes the vis file
 	((MemoryController*)memoryController_)->mem->printStats(true);	
+    // scyu: add differential write information
+	((MemoryController*)memoryController_)->printDifferentialWriteInfo();	
 }
 void MemoryHierarchy::getDramStats(string &sb)
 {
