@@ -2483,7 +2483,6 @@ W64 ReorderBufferEntry::annul(bool keep_misspec_uop, bool return_first_annulled_
             LSQ.annul(annulrob.lsq);
 
             // annul any cache requests for this entry
-
             bool is_store = isclass(annulrob.uop.opcode, OPCLASS_STORE);
             core.memoryHierarchy->annul_request(core.coreid,
                     threadid,

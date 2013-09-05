@@ -243,7 +243,24 @@ bool MemoryController::handle_interconnect_cb(void *arg)
                     
                     if(exception > 0 || pfec > 0){
                         // page fault occurs (EXCEPTION_PageFaultOnRead in check_and_translate)
-                        totalPageFaultCount++;
+                        // tries to handle it
+                        int old_exception = exception;
+                        int mmu_index = cpu_mmu_index((CPUState*)&core->threads[memRequest->get_threadid()]->ctx);
+                        int raise_page_fault = cpu_x86_handle_mmu_fault((CPUX86State*)&core->threads[memRequest->get_threadid()]->ctx,
+                                virtaddr, 1, mmu_index, 1);
+
+                        if (raise_page_fault!=0){
+                            // raise page fault: -1 => cannot handle fault, 1 => generate PF fault
+                            totalPageFaultCount++;
+                            cerr << "page fault: " << std::hex << memRequest->get_physical_address() << endl; 
+                        }else{
+                            // hadle that fault successfully
+                            core->threads[memRequest->get_threadid()]->ctx.check_and_translate (virtaddr, 0, false, false, exception, mmio, pfec);
+                            if(exception <= 0 && pfec <= 0){
+                                prev_data = core->threads[memRequest->get_threadid()]->ctx.loadvirt(virtaddr, 3); 
+                                failedToCountDifference = false;
+                            }
+                        }
                     }else{
                         prev_data = core->threads[memRequest->get_threadid()]->ctx.loadvirt(virtaddr, 3); 
                         failedToCountDifference = false;
@@ -317,7 +334,7 @@ void MemoryController::printDifferentialWriteInfo()
     sb << "Differential wirte - # write with page fault / # total write:\t" << (double) totalPageFaultCount / totalWriteCount << endl;
     sb << "Differential wirte - # set bits:\t" << totalBitSetCount << endl;
     sb << "Differential wirte - # reset bits:\t" << totalBitResetCount << endl;
-    
+
     // dump histograms
     sb << "Differential wirte - histogram of changed bits:\t";
     for(int i=0; i<=64; ++i){

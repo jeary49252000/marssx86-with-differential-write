@@ -23,16 +23,18 @@ sub parser{
     return $target;
 }
 
-# usage: perl dumpHistogram.pl $dir
-#    ex: perl dumpHistogram.pl log
+# usage: perl dumpSetResetInfo.pl $dir
+#    ex: perl dumpSetResetInfo.pl log
 opendir(DIR, $ARGV[0]) or die $!;
 my @file_list= sort { $a cmp $b } readdir(DIR); 
 while(my $file = shift  @file_list){
     if($file ne "." and $file ne ".."){
-        local *FILE;
-        open FILE, "+>$ARGV[0]/$file.csv" or die $!;
-        print FILE parser($ARGV[0]."/".$file,"Differential wirte - histogram of changed bits:\t","\n");
-        close FILE;
+        $w =  parser($ARGV[0]."/".$file,"Differential wirte - # write requests:\t","\n");
+        $success_rate = sprintf("%.3f",1 - parser($ARGV[0]."/".$file,"Differential wirte - # write with page fault / # total write:\t","\n"));
+        $set = parser($ARGV[0]."/".$file,"Differential wirte - # set bits:\t","\n");
+        $reset = parser($ARGV[0]."/".$file,"Differential wirte - # reset bits:\t","\n");
+        $set_ratio = sprintf("%.3f",$set/($set+$reset));
+        print STDOUT "$file:\t$w\t[$success_rate]\t( $set / $reset = $set_ratio)\n";
     }
 }
 closedir(DIR);

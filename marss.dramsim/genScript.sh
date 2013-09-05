@@ -70,7 +70,7 @@ sleep 5
 send "\r"
 expect eof' > script/exedir/$m.$i.$j.$k.sh ;
 
-echo '#PBS -l nodes=1:ppn=1:marss
+echo '#PBS -l nodes=1:ppn=1:scyu
 cd '$MARSS_DIRECTOR';
 if [ ! -d "'$IMAGE_DIRECTOR'" ]; then
 	mkdir '$IMAGE_DIRECTOR'

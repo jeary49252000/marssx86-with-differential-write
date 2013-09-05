@@ -29,13 +29,10 @@ Benchmark=( 410.bwaves 434.zeusmp 437.leslie3d 470.lbm 473.astar );
 
 for B in ${Benchmark[*]};
 do
-    # baseline
-    qsub script/$B.w160.r80.b16.sh
-    sleep 1
     for S in ${Suffix1[*]};
     do
         echo $B.$S
-        qsub script/$B.$S.sh
+        qsub -q small script/$B.$S.sh
         sleep 1
     done
 done
