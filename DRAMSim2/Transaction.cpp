@@ -49,6 +49,13 @@ Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat) :
 	data(dat)
 {}
 
+Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, uint64_t* diff_mask) :
+	transactionType(transType),
+	address(addr),
+	data(dat),
+    diffMask(diff_mask)
+{}
+
 Transaction::Transaction(const Transaction &t)
 	: transactionType(t.transactionType)
 	  , address(t.address)

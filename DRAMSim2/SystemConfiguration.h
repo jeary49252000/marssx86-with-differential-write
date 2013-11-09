@@ -81,6 +81,11 @@ extern unsigned DEVICE_WIDTH;
 // jksdy
 extern unsigned SIZE_ROW;
 
+// scyu
+extern unsigned POWER_BUDGET_PER_CHIP;
+extern unsigned NUM_CHIPS; 
+extern unsigned LINE_SIZE; 
+
 // jksdy
 extern bool VARIABLE_WRITE_LATENCY_ENABLE;
 extern bool DIFFERENTIAL_WRITE_ENABLE;

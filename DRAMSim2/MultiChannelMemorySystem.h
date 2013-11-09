@@ -48,7 +48,9 @@ class MultiChannelMemorySystem : public SimulatorObject
 			bool addTransaction(Transaction *trans);
 			bool addTransaction(const Transaction &trans);
 			bool addTransaction(bool isWrite, uint64_t addr);
-			bool willAcceptTransaction(); 
+            // scyu: add differential write information
+            bool addTransaction(bool isWrite, uint64_t addr, uint64_t* diff_mask);
+            bool willAcceptTransaction(); 
 			bool willAcceptTransaction(uint64_t addr, bool isWrite); 
 			void update();
 			void printStats(bool finalStats=false);

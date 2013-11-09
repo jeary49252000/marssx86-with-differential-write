@@ -1,5 +1,21 @@
 #/usr/bin/bash
 
+
+Suffix4=( 
+w320.r80.c8
+w320.r80.c4
+);
+Suffix3=( 
+w640.r80.b8.c4
+w640.r80.b8.c8
+w640.r80.b8.c16
+w640.r80.b16.c4
+w640.r80.b16.c8
+w640.r80.b16.c16
+w640.r80.b32.c4
+w640.r80.b32.c8
+w640.r80.b32.c16
+);
 Suffix2=( w160.r80.b16 );
 Suffix1=( w160.r40.b16
 w160.r160.b16
@@ -18,9 +34,12 @@ w320.r80.b16
 #Benchmark=( 434.zeusmp 437.leslie3d 459.GemsFDTD 473.astar );
 #Benchmark=( 410.bwaves 429.mcf 436.cactusADM 470.lbm 473.astar 437.lieslie3d);
 #Benchmark=( 410.bwaves );
-Benchmark=( 410.bwaves 434.zeusmp 437.leslie3d 470.lbm 473.astar );
+#Benchmark=( 410.bwaves 434.zeusmp 437.leslie3d 470.lbm 473.astar );
 #Benchmark=( 410.bwaves 429.mcf 470.lbm 434.zeusmp 436.cactusADM 437.leslie3d 450.soplex 459.GemsFDTD 462.libquantum 473.astar mummer stream );
+Benchmark=( 410.bwaves 429.mcf 470.lbm 434.zeusmp 436.cactusADM 437.leslie3d 450.soplex 459.GemsFDTD 462.libquantum 473.astar );
+#Benchmark=( 459.GemsFDTD 462.libquantum 473.astar );
 #Benchmark=( 436.cactusADM );
+#Benchmark=( 429.mcf );
 #Benchmark=( 410.bwave 429.mcf 437.leslie3d 470.lbm 473.astar );
 #Benchmark=( mix_4 mix_5 );
 #Benchmark=( 434.zeusmp 436.cactusADM 437.leslie3d );
@@ -29,7 +48,7 @@ Benchmark=( 410.bwaves 434.zeusmp 437.leslie3d 470.lbm 473.astar );
 
 for B in ${Benchmark[*]};
 do
-    for S in ${Suffix1[*]};
+    for S in ${Suffix3[*]};
     do
         echo $B.$S
         qsub -q small script/$B.$S.sh

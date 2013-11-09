@@ -369,7 +369,7 @@ bool CacheController::complete_request(Message &message,
 
         // scyu: add differential write information 
         //     : store data in cache
-        W64 oldData;
+        W64 oldData[LLC_SIZE>>3];
         CacheLine *line = cacheLines_->insert(queueEntry->request, 
                 queueEntry->request->get_data() ,oldTag, oldData);
 #if 0

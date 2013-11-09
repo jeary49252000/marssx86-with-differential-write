@@ -22,6 +22,12 @@
 // #define msdebug cerr << " CYC ", sim_cycle, " ", __PRETTY_FUNCTION__, "(): \n"; cerr
 // #define msdebug1  cerr
 
+// scyu: add differential write information
+// set LLC size here
+#define LLC_SIZE 64
+// set chip number per rank
+#define CHIP_NUM 8
+
 
 extern "C" {
 #include <sys/ptrace.h>

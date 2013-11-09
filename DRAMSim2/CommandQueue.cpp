@@ -178,8 +178,12 @@ void CommandQueue::enqueue(BusPacket *newBusPacket)
 
 //Removes the next item from the command queue based on the system's
 //command scheduling policy
-bool CommandQueue::pop(BusPacket **busPacket)
+//
+//scyu: get instance of memory controller here to check issuable or not
+bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
 {
+    //scyu :debug
+    _ranks = ranks;
 	//this can be done here because pop() is called every clock cycle by the parent MemoryController
 	//	figures out the sliding window requirement for tFAW
 	//
@@ -835,7 +839,23 @@ bool CommandQueue::isIssuable(BusPacket *busPacket)
 		        busPacket->row == bankStates[busPacket->rank][busPacket->bank].openRowAddress &&
 		        rowAccessCounters[busPacket->rank][busPacket->bank] < TOTAL_ROW_ACCESSES)
 		{
+            //  scyu: toggle the power budget constraint 
+#if 1
+            //  scyu: add differential write information 
+            //  issueable if consumed power < power budget
+            Rank* r = _ranks->at(busPacket->rank);
+            r->budget->reclaim(currentClockCycle);
+           if(r->budget->issuable(busPacket->diffMask)){
+                //cout << "issuable to rank " << busPacket->rank << " bank " << busPacket->bank << endl;
+                //cerr << "issuable: " << r->budget->consume(busPacket->diffMask) << endl;
+                return true;
+            }else{
+                cout << "out of budget @bank " << busPacket->bank << endl;
+                return false;
+            }
+#else
 			return true;
+#endif
 		}
 		else
 		{

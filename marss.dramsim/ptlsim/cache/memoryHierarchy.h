@@ -237,18 +237,20 @@ namespace Memory {
 
     // scyu:  add differential write information 
     //        a map structure for recording the previous data value
-    // input: <address, data value>
+    // input: <address, data array, #elements>
     // return: nothing
-    void insert_data_to_map(W64 addr, W64 data){
+    void insert_data_to_map(W64 addr, W64* data, size_t size){
         // cout << "insert :" << std::hex << data << endl;
-        prevData_[addr] = data;
+        for(size_t i=0; i<= size-1; ++i)
+            prevData_[addr+i] = data[i];
     }
-    // input: <target address>
+    // input: <target address,>
     // return: success or not 
-    bool get_data_from_map(W64 addr, W64& data){
+    bool get_data_from_map(W64 addr, W64* data, size_t size){
         // cout << "count [" << std::hex << addr << "] = " << prevData_.count(addr)  << endl;
         if(prevData_.count(addr) == 0) return false;
-        data = prevData_.at(addr);
+        for(size_t i=0; i<= size-1; ++i)
+            data[i] = prevData_.at(addr+i);
         return true;
     }
 

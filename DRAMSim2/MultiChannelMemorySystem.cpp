@@ -58,8 +58,8 @@ MultiChannelMemorySystem::MultiChannelMemorySystem(const string &deviceIniFilena
 		ERROR("Please specify a power of 2 memory size"); 
 		abort(); 
 	}
-
-	if (pwd.length() > 0)
+	
+    if (pwd.length() > 0)
 	{
 		//ignore the pwd argument if the argument is an absolute path
 		if (deviceIniFilename[0] != '/')
@@ -455,6 +455,13 @@ bool MultiChannelMemorySystem::addTransaction(bool isWrite, uint64_t addr)
 {
 	unsigned channelNumber = findChannelNumber(addr); 
 	return channels[channelNumber]->addTransaction(isWrite, addr); 
+}
+
+// scyu: add differential write information
+bool MultiChannelMemorySystem::addTransaction(bool isWrite, uint64_t addr, uint64_t* diff_mask)
+{
+	unsigned channelNumber = findChannelNumber(addr); 
+	return channels[channelNumber]->addTransaction(isWrite, addr, diff_mask); 
 }
 
 /*

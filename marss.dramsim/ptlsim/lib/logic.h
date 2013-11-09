@@ -370,7 +370,7 @@ struct FullyAssociativeTags {
   T tags[ways];
   // scyu: add differential write information 
   //     : store data in cache
-  T data[ways];
+  T* data[ways];
 
   static const T INVALID = InvalidTag<T>::INVALID;
 
@@ -382,7 +382,10 @@ struct FullyAssociativeTags {
     evictmap = 0;
     foreach (i, ways) {
       tags[i] = INVALID;
-      data[i] = 0x5566; // scyu: magic number for INVALID 
+      data[i] = (T*) calloc(LLC_SIZE >> 3, sizeof(T));
+      foreach(j, LLC_SIZE >> 3){
+        data[i][j] = 0;
+      }
     }
   }
 
@@ -421,7 +424,7 @@ struct FullyAssociativeTags {
 
   // scyu: add differential write information 
   //     : store data in cache
-  int select(T target, T newdata ,T& oldtag, T& olddata) {
+  int select(T target, T* newdata ,T& oldtag, T* olddata) {
     int way = probe(target);
     if (way < 0) {
       way = lru();
@@ -812,7 +815,7 @@ struct FullyAssociativeArray {
   
   // scyu: add differential write information 
   //     : store data in cache
-  V* select(T tag, T newdata, T& oldtag, T& olddata) {
+  V* select(T tag, T* newdata, T& oldtag, T* olddata) {
     int way = tags.select(tag, newdata ,oldtag, olddata);
 
     V& slot = data[way];
@@ -921,7 +924,7 @@ struct AssociativeArray {
 
   // scyu: add differential write information 
   //     : store data in cache
-  V* select(T addr, T newdata, T& oldaddr, T& olddata) {
+  V* select(T addr, T* newdata, T& oldaddr, T* olddata) {
     return sets[setof(addr)].select(tagof(addr), newdata ,oldaddr, olddata);
   }
 

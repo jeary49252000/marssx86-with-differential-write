@@ -45,6 +45,9 @@
 #include "BankState.h"
 #include "Transaction.h"
 #include "SystemConfiguration.h"
+
+#include "Rank.h"
+
 #include "SimulatorObject.h"
 #include <map>
 
@@ -70,7 +73,8 @@ public:
 	virtual ~CommandQueue(); 
 
 	void enqueue(BusPacket *newBusPacket);
-	bool pop(BusPacket **busPacket);
+	// scyu: add differential write information
+    bool pop(BusPacket **busPacket, vector<Rank *>* ranks);
 	bool hasRoomFor(unsigned numberToEnqueue, unsigned rank, unsigned bank);
 	bool isIssuable(BusPacket *busPacket);
 	bool isEmpty(unsigned rank);
@@ -92,8 +96,8 @@ public:
     
     unsigned queuedWriteCnt;
 
-
-
+    // scyu: get instance of ranks here to check issuable or not
+    vector<Rank *>* _ranks;
 private:
 	void nextRankAndBank(unsigned &rank, unsigned &bank);
 	//fields

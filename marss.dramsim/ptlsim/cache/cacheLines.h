@@ -40,7 +40,7 @@ namespace Memory {
         W8 state;
         // scyu: add differential write information 
         //     : store data in cache
-        W64 data;
+        W64 data[LLC_SIZE>>3];
 
         void init(W64 tag_t) {
             tag = tag_t;
@@ -49,23 +49,24 @@ namespace Memory {
 
         // scyu: add differential write information 
         //     : store data in cache
-        void init(W64 tag_t, W64 data_t) {
+        void init(W64 tag_t, W64 data_t[]) {
             tag = tag_t;
-            data = data_t;
+            for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i)
+                data[i] = data_t[i];
             if (tag == (W64)-1) state = 0;
         }
 
         void reset() {
             tag = -1;
             state = 0;
-            data = (W64) 0x5566; // scyu: magic number for INVALID
+            for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i)
+                data[i] = 0; // scyu
         }
 
         void invalidate() { reset(); }
 
         void print(ostream& os) const {
             os << "Cacheline: tag[", (void*)tag, "] ";
-            os << "data[", (void*)data, "] ";
             os << "state[", state, "] ";
         }
     };
@@ -96,7 +97,7 @@ namespace Memory {
             // scyu: add differential write information 
             //     : store data in cache
             virtual CacheLine* insert(MemoryRequest *request,
-                    W64 newData, W64& oldTag, W64& oldData)=0;
+                    W64 newData[], W64& oldTag, W64 oldData[])=0;
             virtual int invalidate(MemoryRequest *request)=0;
             virtual bool get_port(MemoryRequest *request)=0;
             virtual void print(ostream& os) const =0;
@@ -134,7 +135,7 @@ namespace Memory {
             CacheLine* probe(MemoryRequest *request);
             CacheLine* insert(MemoryRequest *request, W64& oldTag);
             // scyu: add differential write information 
-            CacheLine* insert(MemoryRequest *request, W64 newData, W64& oldTag, W64& oldData);
+            CacheLine* insert(MemoryRequest *request, W64 newData[], W64& oldTag, W64 oldData[]);
             int invalidate(MemoryRequest *request);
             bool get_port(MemoryRequest *request);
             void print(ostream& os) const;
@@ -252,7 +253,7 @@ namespace Memory {
     //     : store data in cache
     template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
         CacheLine* CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::insert(MemoryRequest *request, 
-                W64 newData, W64& oldTag, W64& oldData)
+                W64 newData[], W64& oldTag, W64 oldData[])
         {
             W64 physAddress = request->get_physical_address();
             CacheLine *line = base_t::select(physAddress, newData ,oldTag, oldData);

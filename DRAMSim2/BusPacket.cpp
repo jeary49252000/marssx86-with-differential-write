@@ -107,6 +107,32 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
     }
 }
 
+// scyu: add differential write information
+BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, 
+		unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t* diffMask,
+		ostream &dramsim_log_, uint64_t time) :
+	dramsim_log(dramsim_log_),
+	busPacketType(packtype),
+	column(col),
+	row(rw),
+	bank(b),
+	rank(r),
+	physicalAddress(physicalAddr),
+	data(dat),
+    diffMask(diffMask),
+    timeAdded(time)
+{
+    switch(busPacketType){
+        case WRITE:
+        case WRITE_P:
+        case REFRESH:
+            //iterations = getIteration(RETENTION_LEVEL, busPacketType);
+            iterations = 1;
+            break;
+    }
+}
+
+
 void BusPacket::print(uint64_t currentClockCycle, bool dataStart)
 {
 	if (this == NULL)

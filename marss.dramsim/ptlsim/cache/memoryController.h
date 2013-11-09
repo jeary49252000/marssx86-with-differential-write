@@ -145,13 +145,14 @@ class MemoryController : public Controller
         W64 totalWriteLatency[2];
         W64 totalWriteCount;
 
-        // add statistical information
+        // scyu: add statistical information
         W64 totalBitSetCount;
         W64 totalBitResetCount;
         W64 totalPageFaultCount;            // failed to get the set/rest information
         std::map<W8, W64> histBitSet;      // # bit set each write
         std::map<W8, W64> histBitReset;    // # bit reset each write
         std::map<W8, W64> histBitChanged;  // # histBitSet + histBitReset
+        std::map<W8, W64> distBitChangedPerChip;  // # distribution of bit changing info per chip
 };
 
 };

@@ -100,6 +100,7 @@ MemoryController::MemoryController(W8 coreid, const char *name,
     histBitSet.clear();
     histBitReset.clear();
     histBitChanged.clear();
+    distBitChangedPerChip.clear();
 }
 
 /*
@@ -217,17 +218,26 @@ bool MemoryController::handle_interconnect_cb(void *arg)
 	// align the request; for now assume a 64 byte transaction 
 	// FIXME: in the future there should be some mechanism to check that the size
 	// 	of a transaction and maybe make sure it matches the LLC line size
-	physicalAddress = ALIGN_ADDRESS(physicalAddress, dramsim_transaction_size); 
+	
+    // scyu: add differential write information
+	//physicalAddress = ALIGN_ADDRESS(physicalAddress, dramsim_transaction_size); 
+    size_t new_data_index = physicalAddress - ALIGN_ADDRESS(physicalAddress, LLC_SIZE); 
+    physicalAddress = ALIGN_ADDRESS(physicalAddress, LLC_SIZE); 
     
     // scyu: add differential write information 
-    
+    // size_in_map: (#elements to store, dramsim_transaction_size/8)
+    size_t size_in_map = LLC_SIZE >> 3;
+    uint64_t* diff_mask = (uint64_t*) calloc(size_in_map,sizeof(uint64_t));;
+
     // a write request to memory subsystem
     // cout << "Write 0x" << std::hex << memRequest->get_data() << " to 0x" << std::hex << memRequest->get_physical_address()<< endl; 
     if(memRequest->get_type() == MEMORY_OP_UPDATE){
         // get the previous data to compare the difference at this update
-        W64  prev_data = 0x5566; // magic number
+        W64 prev_data[LLC_SIZE>>3];
+        for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i)
+            prev_data[i] = 0;
         bool failedToCountDifference = true;
-        if(memoryHierarchy_->get_data_from_map(memRequest->get_physical_address(), prev_data) == true){
+        if(memoryHierarchy_->get_data_from_map(physicalAddress, prev_data, size_in_map) == true){
             // retrieve successfully
             failedToCountDifference = false;
         }else{
@@ -252,17 +262,20 @@ bool MemoryController::handle_interconnect_cb(void *arg)
                         if (raise_page_fault!=0){
                             // raise page fault: -1 => cannot handle fault, 1 => generate PF fault
                             totalPageFaultCount++;
-                            cerr << "page fault: " << std::hex << memRequest->get_physical_address() << endl; 
+                            cerr << "page fault: " << std::hex << physicalAddress << endl; 
+                            //cerr << raise_page_fault << endl;
                         }else{
                             // hadle that fault successfully
                             core->threads[memRequest->get_threadid()]->ctx.check_and_translate (virtaddr, 0, false, false, exception, mmio, pfec);
                             if(exception <= 0 && pfec <= 0){
-                                prev_data = core->threads[memRequest->get_threadid()]->ctx.loadvirt(virtaddr, 3); 
+                                for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i)
+                                    prev_data[i] = core->threads[memRequest->get_threadid()]->ctx.loadvirt(virtaddr+((i-new_data_index)<<3), 3); 
                                 failedToCountDifference = false;
                             }
                         }
                     }else{
-                        prev_data = core->threads[memRequest->get_threadid()]->ctx.loadvirt(virtaddr, 3); 
+                        for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i)
+                            prev_data[i] = core->threads[memRequest->get_threadid()]->ctx.loadvirt(virtaddr+((i-new_data_index)<<3), 3); 
                         failedToCountDifference = false;
                     }
                 }
@@ -271,25 +284,35 @@ bool MemoryController::handle_interconnect_cb(void *arg)
 
         // count the different token when success
         if(!failedToCountDifference){
-            // cout << "Prev Data: " << std::bitset<64>(prev_data) << " [" << std::hex << prev_data << "]"<< endl;
-            // cout << "New  Data: " << std::bitset<64>(memRequest->get_data()) << " [" << std::hex << memRequest->get_data() << "]"<< endl;
-            W64 diff = prev_data ^ memRequest->get_data();
-            W64 set, reset;    
-            for(set = 0, reset = 0; diff; diff >>= 1, prev_data >>= 1){
-                // scyu: not use if-else statement here for better(?) efficiency
-                reset += 0x1 & diff &  prev_data; // the original data of this modified bit is 1: reset 
-                set   += 0x1 & diff & ~prev_data; // the original data of this modified bit is 0: set  
+            for(size_t i=0; i<=size_in_map-1; ++i){
+                //cout << "Prev Data: " << std::bitset<64>(prev_data[i]) << " [" << std::hex << prev_data[i] << "]"<< endl;
+                //cout << "New  Data: " << std::bitset<64>(memRequest->get_data_at(i)) << " [" << std::hex << memRequest->get_data_at(i) << "]"<< endl;
+                W64 diff = prev_data[i] ^ memRequest->get_data_at(i);
+                //W64 diff = (W64)-1;
+                W64 set, reset;    
+                
+                // differential mask to DRAMSim
+                diff_mask[i] = diff;
+                
+                for(set = 0, reset = 0; diff; diff >>= 1, prev_data[i] >>= 1){
+                    // scyu: not use if-else statement here for better(?) efficiency
+                    reset += 0x1 & diff &  prev_data[i]; // the original data of this modified bit is 1: reset 
+                    set   += 0x1 & diff & ~prev_data[i]; // the original data of this modified bit is 0: set  
+                }
+                // update statistical infomation
+                totalBitSetCount   += set;
+                totalBitResetCount += reset;
+                histBitSet[set]++;
+                histBitReset[reset]++;
+                // FIXME: scyu
+                histBitChanged[set+reset]++;
+                distBitChangedPerChip[i%CHIP_NUM] += (set+reset);
             }
-            // update statistical infomation
-            totalBitSetCount   += set;
-            totalBitResetCount += reset;
-            histBitSet[set]++;
-            histBitReset[reset]++;
-            histBitChanged[set+reset]++;
+            //cout<< "---------" <<endl;
         }
 
         // update the lookup map
-        memoryHierarchy_->insert_data_to_map(memRequest->get_physical_address(),memRequest->get_data()); 
+        memoryHierarchy_->insert_data_to_map(physicalAddress, memRequest->get_data(), size_in_map); 
     }
 
     /* This fixes issue #9: since we assume a write-allocate policy for MARSS,
@@ -300,7 +323,12 @@ bool MemoryController::handle_interconnect_cb(void *arg)
      */
 
     bool isWrite = memRequest->get_type() == MEMORY_OP_UPDATE;
-    bool accepted = mem->addTransaction(isWrite,physicalAddress);
+    // scyu: add transaction with differential information
+    bool accepted = mem->addTransaction(isWrite, physicalAddress, diff_mask);
+    if(diff_mask){
+        free(diff_mask);
+        diff_mask = NULL;
+    }
     queueEntry->inUse = true;
     queueEntry->request->timeStamp[1] = sim_cycle;
     // the interconnect should have called mem->WillAcceptTransaction() via can_broadcast() before we got here, so this should always succeed
@@ -337,9 +365,17 @@ void MemoryController::printDifferentialWriteInfo()
 
     // dump histograms
     sb << "Differential wirte - histogram of changed bits:\t";
-    for(int i=0; i<=64; ++i){
+    for(int i=0; i<=(LLC_SIZE<<3)-1; ++i){
         sb << ((histBitChanged.count(i) > 0)? histBitChanged[i] : 0) << ", "; 
     }
+    
+    sb << endl;
+
+    // dump distribution
+    sb << "Differential wirte - distribution of changed bits:\t";
+    for(size_t i=0; i<=CHIP_NUM-1; ++i)
+        sb << ((distBitChangedPerChip.count(i)>0)? distBitChangedPerChip[i] : 0) << ", ";
+
     ptl_logfile << sb << endl;
 }
 

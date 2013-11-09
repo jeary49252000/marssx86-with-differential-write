@@ -65,8 +65,13 @@ public:
 	uint64_t physicalAddress;
 	void *data;
 
+    // scyu: add differential write information
+    uint64_t* diffMask;
+
 	//Functions
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, uint64_t time);
+	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t* diffMask, ostream &dramsim_log_, uint64_t time);
+
 
 	void print();
 	void print(uint64_t currentClockCycle, bool dataStart);

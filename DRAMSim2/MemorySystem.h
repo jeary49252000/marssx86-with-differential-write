@@ -60,6 +60,8 @@ public:
 	void update();
 	bool addTransaction(Transaction *trans);
 	bool addTransaction(bool isWrite, uint64_t addr);
+	// scyu: add differential write information 
+    bool addTransaction(bool isWrite, uint64_t addr, uint64_t* diff_mask);
 	void printStats(bool finalStats);
 	void simulation_start();
     void getDramStats(string &sb);

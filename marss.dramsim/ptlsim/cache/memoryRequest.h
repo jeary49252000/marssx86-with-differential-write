@@ -54,8 +54,8 @@ class MemoryRequest: public selfqueuelink
 {
 	public:
 		MemoryRequest() { reset(); }
-
-		void reset() {
+		
+        void reset() {
 			coreId_ = 0;
 			threadId_ = 0;
 			physicalAddress_ = 0;
@@ -67,8 +67,9 @@ class MemoryRequest: public selfqueuelink
 			isData_ = 0;
 			// scyu: add differential write information
             // (add data in memory request)
-            data_ = (W64) 0x5566; // scyu: magic number for INVALID 
-			history = new stringbuf();
+            for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i)
+                data_[i] = 0;  
+            history = new stringbuf();
             coreSignal_ = NULL;
 		}
 
@@ -132,8 +133,9 @@ class MemoryRequest: public selfqueuelink
 		W64 get_init_cycles() { return cycles_; }
 
         // scyu: add differential write information 
-        W64 get_data(void) { return data_; }
-        void set_data(W64 data) { data_ = data; }
+        W64* get_data(void) { return data_; }
+        W64 get_data_at(size_t index) { return (index > (LLC_SIZE>>3))? 0:data_[index]; }
+        void set_data(W64 data[]) { for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i) data_[i] = data[i]; }
 
         // scyu: add differential write information 
         W64 get_virtual_address(void) { return virtualAddress_; }
@@ -203,7 +205,7 @@ class MemoryRequest: public selfqueuelink
         Signal *coreSignal_;
 
         // scyu: add differential write information 
-        W64 data_; // add information of data in memory request (for write)
+        W64 data_[LLC_SIZE>>3]; // add information of data in memory request (for write)
 };
 
 static inline ostream& operator <<(ostream& os, const MemoryRequest& request)

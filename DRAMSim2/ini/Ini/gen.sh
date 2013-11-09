@@ -1,6 +1,11 @@
-wt=( w80 w160 w320 )
-rd=( r40 r80 r160 )
+#wt=( w80 w160 w320 )
+wt=( w160 w320 w640)
+#rd=( r40 r80 r160 )
+rd=( r80 )
 bk=( b8 b16 b32 )
+#bk=( b16 )
+
+cp=( c4 c8 c16)
 
 for i in ${wt[*]};
 do
@@ -8,14 +13,18 @@ do
 	do
         for k in ${bk[*]};
         do
-			cp default.ini $i'_'$j'_'$k.ini;
-        done
+            for l in ${cp[*]};
+            do
+			    cp default.ini $i'_'$j'_'$k'_'$l.ini;
+            done
+        done;
 	done;
 done;
 
 
-sed -i s/tWR=160/tWR=80/g *w80*;
+#sed -i s/tWR=160/tWR=80/g *w80*;
 sed -i s/tWR=160/tWR=320/g *w320*;
+sed -i s/tWR=160/tWR=640/g *w640*;
 
 
 sed -i s/tRAS=80/tRAS=40/g *r40*;
@@ -35,3 +44,5 @@ sed -i s/NUM_ROWS=8388608/NUM_ROWS=16777216/g *b8*;
 sed -i s/NUM_BANKS=8/NUM_BANKS=16/g *b32*;
 sed -i s/NUM_ROWS=8388608/NUM_ROWS=4194304/g *b32*;
 
+sed -i s/POWER_BUDGET_PER_CHIP=128/POWER_BUDGET_PER_CHIP=256/g *c16*;
+sed -i s/POWER_BUDGET_PER_CHIP=128/POWER_BUDGET_PER_CHIP=64/g *c4*;

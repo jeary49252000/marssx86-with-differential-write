@@ -60,6 +60,9 @@ public:
 	MemoryController(MemorySystem* ms, CSVWriter &csvOut_, ostream &dramsim_log_);
 	virtual ~MemoryController();
 
+    // scyu: add differential write information
+    vector<Rank *>* getRank(){return ranks;}
+
 	bool addTransaction(Transaction *trans);
 	bool WillAcceptTransaction();
 	bool WillAcceptTransaction(unsigned rank, unsigned bank, bool isWrite);

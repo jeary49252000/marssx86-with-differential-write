@@ -39,6 +39,7 @@
 #include "SystemConfiguration.h"
 #include "Bank.h"
 #include "BankState.h"
+#include "PowerBudget.h"
 
 using namespace std;
 using namespace DRAMSim;
@@ -73,6 +74,8 @@ public:
 	BusPacket *outgoingDataPacket;
 	unsigned dataCyclesLeft;
 	bool refreshWaiting;
+    // scyu
+    PowerBudget* budget;
 
 	//these are vectors so that each element is per-bank
 	vector<BusPacket *> readReturnPacket;

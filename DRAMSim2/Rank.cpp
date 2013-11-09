@@ -55,7 +55,8 @@ Rank::Rank(ostream &dramsim_log_) :
 
 #ifndef NO_STORAGE
 #endif
-
+    // scyu
+    this->budget = new PowerBudget(POWER_BUDGET_PER_CHIP);
 }
 
 // mutators
