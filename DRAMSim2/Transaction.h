@@ -58,14 +58,15 @@ public:
 	uint64_t address;
 	void *data;
 	// scyu: add differential write information
-    uint64_t* diffMask;
+    //uint64_t diffMask[8]; // FIXME later
+    uint64_t diffMask[8]; // FIXME later
     uint64_t timeAdded;
 	uint64_t timeReturned;
 
 	friend ostream &operator<<(ostream &os, const Transaction &t);
 	//functions
 	Transaction(TransactionType transType, uint64_t addr, void *data);
-	Transaction(TransactionType transType, uint64_t addr, void *data, uint64_t* diff_mask);
+	Transaction(TransactionType transType, uint64_t addr, void *data, uint64_t diff_mask[]);
 	Transaction(const Transaction &t);
 
 	BusPacketType getBusPacketType()

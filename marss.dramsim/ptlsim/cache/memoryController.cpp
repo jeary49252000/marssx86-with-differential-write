@@ -288,7 +288,7 @@ bool MemoryController::handle_interconnect_cb(void *arg)
                 //cout << "Prev Data: " << std::bitset<64>(prev_data[i]) << " [" << std::hex << prev_data[i] << "]"<< endl;
                 //cout << "New  Data: " << std::bitset<64>(memRequest->get_data_at(i)) << " [" << std::hex << memRequest->get_data_at(i) << "]"<< endl;
                 W64 diff = prev_data[i] ^ memRequest->get_data_at(i);
-                //W64 diff = (W64)-1;
+                //W64 diff = (W64) -1;
                 W64 set, reset;    
                 
                 // differential mask to DRAMSim
@@ -299,6 +299,7 @@ bool MemoryController::handle_interconnect_cb(void *arg)
                     reset += 0x1 & diff &  prev_data[i]; // the original data of this modified bit is 1: reset 
                     set   += 0x1 & diff & ~prev_data[i]; // the original data of this modified bit is 0: set  
                 }
+                
                 // update statistical infomation
                 totalBitSetCount   += set;
                 totalBitResetCount += reset;
@@ -308,7 +309,6 @@ bool MemoryController::handle_interconnect_cb(void *arg)
                 histBitChanged[set+reset]++;
                 distBitChangedPerChip[i%CHIP_NUM] += (set+reset);
             }
-            //cout<< "---------" <<endl;
         }
 
         // update the lookup map
@@ -324,7 +324,7 @@ bool MemoryController::handle_interconnect_cb(void *arg)
 
     bool isWrite = memRequest->get_type() == MEMORY_OP_UPDATE;
     // scyu: add transaction with differential information
-    bool accepted = mem->addTransaction(isWrite, physicalAddress, diff_mask);
+    bool accepted = mem->addTransaction(isWrite, physicalAddress, (isWrite)? diff_mask:NULL);
     if(diff_mask){
         free(diff_mask);
         diff_mask = NULL;

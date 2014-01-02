@@ -66,11 +66,11 @@ public:
 	void *data;
 
     // scyu: add differential write information
-    uint64_t* diffMask;
+    uint64_t diffMask[8]; //FIXME later
 
 	//Functions
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, uint64_t time);
-	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t* diffMask, ostream &dramsim_log_, uint64_t time);
+	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t diff_mask[], ostream &dramsim_log_, uint64_t time);
 
 
 	void print();

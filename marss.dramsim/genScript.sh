@@ -4,15 +4,17 @@
 
 #Benchmark=( 473.astar 437.leslie3d );
 #Benchmark=( 410.bwaves 434.zeusmp 437.leslie3d 470.lbm 473.astar );
-Benchmark=( 410.bwaves 429.mcf 433.milc 434.zeusmp 436.cactusADM 437.leslie3d 450.soplex 459.GemsFDTD 462.libquantum 470.lbm 473.astar stream mummer);
+#Benchmark=( 410.bwaves 429.mcf 433.milc 434.zeusmp 436.cactusADM 437.leslie3d 450.soplex 459.GemsFDTD 462.libquantum 470.lbm 473.astar stream mummer);
+Benchmark=( 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 473.astar.8c);
 
 abs_path=/home/r01/scyu/diffWrite/Wonderland
 
 #wt=( w80 w160 w320 )
-wt=( w160 w320 w640)
+wt=( w160 w320 w640 w1280)
 #rd=( r40 r80 r160 )
 rd=(r80)
 bk=( b8 b16 b32 )
+#bk=( b1 b2 )
 
 cp=( c4 c8 c16)
 
@@ -37,8 +39,9 @@ done
 #Wlatency=( 1000c );
 
 MARSS_DIRECTOR=`pwd`;
-IMAGE_DIRECTOR="/tmp2/scyu_marss/";
-IMAGE_SOURCE_DIRECTOR="/home/phd/liurs/Image/8g/";
+IMAGE_DIRECTOR="/tmp3/scyu_marss/";
+IMAGE_SOURCE_DIRECTOR="/tmp3/scyu_marss/";
+#IMAGE_SOURCE_DIRECTOR="/home/phd/liurs/Image/8g/";
 
 # check directory
 if [ ! -d "script" ]; then
@@ -98,7 +101,7 @@ echo '-corefreq 4000000000
 -stopinsns 1501000000
 -kill-after-run
 -logfilesize 268435456
--logfile '$abs_path'/marss.dramsim/log/'$m'.'$i'.'$j'.'$k'.'$l'.log.l2
+-logfile '$abs_path'/marss.dramsim/log/'$m'.'$i'.'$j'.'$k'.'$l'.log.8c
 -dramsim-device-ini-file ini/Ini/'$i'_'$j'_'$k'_'$l'.ini
 -dramsim-pwd '$abs_path'/DRAMSim2
 -dramsim-system-ini-file ini/System/default.ini

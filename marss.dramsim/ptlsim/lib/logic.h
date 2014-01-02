@@ -432,7 +432,9 @@ struct FullyAssociativeTags {
       oldtag = tags[way];
       olddata = data[way];
       tags[way] = target;
-      data[way] = newdata;
+      for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i){
+        data[way][i] = newdata[i];
+      }
     }
     use(way);
     if (evictmap.allset()) {

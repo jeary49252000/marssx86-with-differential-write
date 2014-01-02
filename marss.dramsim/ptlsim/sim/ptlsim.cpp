@@ -1498,10 +1498,15 @@ extern "C" void update_progress() {
 
     //while (sb.size() < 160) sb << ' ';
 
+    // scyu: dump ipc at runtime
+    if likely(sim_cycle != 0)
+        sb << endl << "Current ipc: " << floatstring((float)total_insns_committed / sim_cycle, 3);
+    
     ptl_logfile << sb, endl;
     if (!config.quiet) {
         cerr << "\r  ", sb;
     }
+    
 
     last_printed_status_at_ticks = ticks;
     last_printed_status_at_cycle = sim_cycle;

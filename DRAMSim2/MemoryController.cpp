@@ -461,10 +461,11 @@ void MemoryController::update()
                     bankStates[rank][bank].nextWrite = bankStates[rank][bank].nextActivate;
                 }
                 {
-#if 1
+#if 1 
                         //scyu
-                        Rank* t = ranks->at(rank);
-                        t->budget->consume(poppedBusPacket->diffMask, bank, bankStates[rank][bank].nextWrite);
+                        Rank* r = ranks->at(rank);
+                        r->budget->consume(poppedBusPacket->diffMask, bank, bankStates[rank][bank].nextWrite);
+                        //cout << "balance:\t" << r->budget->dumpBalanceStatus() << endl;
 #endif 
                 }
                 break;

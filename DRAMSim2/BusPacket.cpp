@@ -109,7 +109,7 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
 
 // scyu: add differential write information
 BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, 
-		unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t* diffMask,
+		unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t diff_mask[],
 		ostream &dramsim_log_, uint64_t time) :
 	dramsim_log(dramsim_log_),
 	busPacketType(packtype),
@@ -119,7 +119,6 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
 	rank(r),
 	physicalAddress(physicalAddr),
 	data(dat),
-    diffMask(diffMask),
     timeAdded(time)
 {
     switch(busPacketType){
@@ -129,6 +128,13 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
             //iterations = getIteration(RETENTION_LEVEL, busPacketType);
             iterations = 1;
             break;
+    }
+
+    // scyu: cpoy diffMask only when there is a legal diff mask
+    if(diff_mask != NULL){
+        for(size_t i=0; i<=(LINE_SIZE>>3)-1; ++i){
+           diffMask[i] = diff_mask[i];
+        }
     }
 }
 
