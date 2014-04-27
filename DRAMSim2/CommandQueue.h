@@ -91,6 +91,12 @@ public:
     unsigned WriteReqNum[MAX_RANKS][MAX_BANKS];  //rs
     bool WriteBurst[MAX_RANKS][MAX_BANKS];
 
+    // scyu: indicating write reqeust is in progressed 
+    bool WriteInProgressed[MAX_RANKS][MAX_BANKS];  
+    uint64_t TransInProgressed[MAX_RANKS][MAX_BANKS];
+    uint64_t WriteBurstStartCycle[MAX_RANKS][MAX_BANKS];
+    uint64_t WriteBurstTotalCycle[MAX_RANKS][MAX_BANKS];
+
     unsigned long num_read_first;
     unsigned long num_write_first;
     

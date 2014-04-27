@@ -82,9 +82,12 @@ extern unsigned DEVICE_WIDTH;
 extern unsigned SIZE_ROW;
 
 // scyu
+#define LINE_SIZE 256
+#define NUM_CHIPS 8
+#define SUB_REQUEST_COUNT 2
+extern bool POWER_BUDGETING; 
+extern bool BUDGET_AWARE_SCHEDULE; 
 extern unsigned POWER_BUDGET_PER_CHIP;
-extern unsigned NUM_CHIPS; 
-extern unsigned LINE_SIZE; 
 
 // jksdy
 extern bool VARIABLE_WRITE_LATENCY_ENABLE;

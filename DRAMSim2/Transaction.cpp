@@ -55,13 +55,30 @@ Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, ui
 	address(addr),
 	data(dat)
 {
-    // scyu: cpoy diffMask only when there is a write
+    // scyu: copy diff_mask only when there is a write
     if(diff_mask != NULL){
-        for(size_t i=0; i<=(LINE_SIZE>>3)-1; ++i){
+        for(size_t i=0; i<=NUM_CHIPS-1; ++i){
            diffMask[i] = diff_mask[i];
         }
     }
 }
+
+// scyu: copy allocated_token
+Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, uint64_t allocated_token[], bool is_sub_request, uint8_t iter) :
+	transactionType(transType),
+	address(addr),
+   	data(dat),
+    isSubReq(is_sub_request),
+    iteration(iter)
+{
+     // scyu: cpoy allocated token only when there is a write
+    if(allocated_token != NULL){
+        for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+           token[i] = allocated_token[i];
+        }
+    }  
+}
+
 
 Transaction::Transaction(const Transaction &t)
 	: transactionType(t.transactionType)

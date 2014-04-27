@@ -66,12 +66,14 @@ public:
 	void *data;
 
     // scyu: add differential write information
-    uint64_t diffMask[8]; //FIXME later
+    unsigned subReqID;
+    uint64_t transID;
+    uint64_t token[NUM_CHIPS]; 
 
 	//Functions
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, uint64_t time);
-	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t diff_mask[], ostream &dramsim_log_, uint64_t time);
-
+	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t allocated_token[], unsigned iter, ostream &dramsim_log_, uint64_t time);
+	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t allocated_token[], unsigned iter, uint64_t id, ostream &dramsim_log_, uint64_t time);
 
 	void print();
 	void print(uint64_t currentClockCycle, bool dataStart);

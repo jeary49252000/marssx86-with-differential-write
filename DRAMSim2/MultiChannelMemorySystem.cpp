@@ -188,7 +188,6 @@ void MultiChannelMemorySystem::InitOutputFiles(string traceFilename)
 			sim_description_str = string(sim_description);
 	}
 
-
 	// create a properly named verification output file if need be and open it
 	// as the stream 'cmd_verify_out'
 	if (VERIFICATION_OUTPUT)
@@ -302,13 +301,16 @@ void MultiChannelMemorySystem::InitOutputFiles(string traceFilename)
 		// cerr << "vis file output disabled\n";
 	}
 #ifdef LOG_OUTPUT
+#if 0
 	string dramsimLogFilename("dramsim");
-	if (sim_description != NULL)
+    if (sim_description != NULL)
 	{
 		dramsimLogFilename += "."+sim_description_str; 
 	}
-	
 	dramsimLogFilename = FilenameWithNumberSuffix(dramsimLogFilename, ".log"); 
+#endif
+    // scyu: flexible configuration
+	string dramsimLogFilename(traceFilename);
 
 	dramsim_log.open(dramsimLogFilename.c_str(), ios_base::out | ios_base::trunc );
 

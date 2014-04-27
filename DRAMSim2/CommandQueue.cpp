@@ -44,6 +44,9 @@
 #include "MemoryController.h"
 #include <assert.h>
 
+// scyu: NO_SUB_REQUEST
+#define NO_SUB_REQUEST 1
+
 using namespace DRAMSim;
 
 CommandQueue::CommandQueue(vector< vector<BankState> > &states, ostream &dramsim_log_) :
@@ -119,6 +122,9 @@ CommandQueue::CommandQueue(vector< vector<BankState> > &states, ostream &dramsim
             ReadReqNum[i][j] = 0;
             WriteReqNum[i][j] = 0;
             WriteBurst[i][j] = false;
+            WriteInProgressed[i][j] = false;
+            WriteBurstStartCycle[i][j] = 0;
+            WriteBurstTotalCycle[i][j] = 0;
         }
     }
     num_read_first  = 0;
@@ -238,7 +244,8 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
 								packet->bank == b)
 						{
 							if (packet->busPacketType != ACTIVATE && isIssuable(packet))
-							{
+                            {
+                                // scyu: FIXME, might be an issue
 								*busPacket = packet;
 								queue.erase(queue.begin() + j);
 								sendingREF = true;
@@ -309,12 +316,16 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                         }else{ // write queue are drained to be empty
                             cout << "write burst end ["<<nextRank<<"]["<<nextBank<< "] [" << WriteReqNum[nextRank][nextBank] << "("<< activate_count << ", " <<  read_count << ", "<< write_count <<")] @cycle" << currentClockCycle << endl;
                             WriteBurst[nextRank][nextBank] = false;  //finish write burst mode
+                            WriteBurstTotalCycle[nextRank][nextBank] += currentClockCycle - WriteBurstStartCycle[nextRank][nextBank];
+                            PRINT( " - Bursting Time (Bank " <<nextBank<<"): " << (float) WriteBurstTotalCycle[nextRank][nextBank]/currentClockCycle << " ( " << WriteBurstTotalCycle[nextRank][nextBank] << " )");
+                            cout <<  " - Bursting Time (Bank " <<nextBank<<"): " << (float) WriteBurstTotalCycle[nextRank][nextBank]/currentClockCycle << " ( " << WriteBurstTotalCycle[nextRank][nextBank] << " )" << endl;
                             read_first = true;
                         }
                     }else{
                         if(WriteReqNum[nextRank][nextBank] >= W_QUEUE_DEPTH){ // write queue full
                             cout << "write burst start ["<<nextRank<<"]["<<nextBank<< "] [" << WriteReqNum[nextRank][nextBank] << "("<< activate_count << ", " <<  read_count << ", "<< write_count <<")] @cycle" << currentClockCycle << endl;
                             WriteBurst[nextRank][nextBank] = true;  //enter write burst mode
+                            WriteBurstStartCycle[nextRank][nextBank] = currentClockCycle;
                             read_first = false;
                         }else{
                             read_first = true;
@@ -365,7 +376,58 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                                     }
                                     if (dependencyFound) continue;
                                 }
-
+                                
+                                if(!BUDGET_AWARE_SCHEDULE){
+                                    // for baseline architecture, do not iterrupt write iterations
+                                    if(queue[i]->busPacketType == ACTIVATE && i<(queue.size()-1) 
+                                            && queue[i+1]->busPacketType == WRITE_P && WriteInProgressed[nextRank][nextBank]){
+                                        // check transaction ID
+                                        if(queue[i+1]->transID != TransInProgressed[nextRank][nextBank]){
+                                            //cout << queue[i+1]->transID <<  " waiting " << TransInProgressed[nextRank][nextBank] << endl;
+                                            continue;
+                                        }
+                                        // no need to check subReqID, since sub-requests are issued in ordered
+                                    }
+                                }
+// no sub-request, only dynamic division
+#if NO_SUB_REQUEST
+                                else{
+                                    // check sub-requests is issuable or not
+                                    Rank* rank = _ranks->at(nextRank);
+                                    // for baseline architecture, do not iterrupt write iterations
+                                    if(queue[i]->busPacketType == ACTIVATE && i<(queue.size()-1) 
+                                            && queue[i+1]->busPacketType == WRITE_P && WriteInProgressed[nextRank][nextBank]){
+                                        // check transaction ID
+                                        if((queue[i+1]->transID != TransInProgressed[nextRank][nextBank])
+                                                || (!rank->budget->trySplitReq(queue[i+1], queue))){
+                                            //cout << queue[i+1]->transID <<  " waiting " << TransInProgressed[nextRank][nextBank] << endl;
+                                            //cout << rank->budget->dumpBudgetStatus(queue[i+1]->token) << endl;
+                                            continue;
+                                        }
+                                        // no need to check subReqID, since sub-requests are issued in ordered
+                                    }
+                                    else if(queue[i]->busPacketType == WRITE_P){
+                                        if(WriteInProgressed[nextRank][nextBank] && (queue[i]->transID != TransInProgressed[nextRank][nextBank])
+                                                || (!rank->budget->trySplitReq(queue[i], queue))){
+                                            continue;
+                                        }
+                                    }
+                                }
+#else
+                                else{
+                                    // check sub-requests is issuable or not
+                                    Rank* rank = _ranks->at(nextRank);
+                                    if(queue[i]->busPacketType == ACTIVATE && i<(queue.size()-1) && queue[i+1]->busPacketType == WRITE_P){ 
+                                        if(!rank->budget->trySplitReq(queue[i+1], queue))
+                                            continue;
+                                    }
+                                    else if(queue[i]->busPacketType == WRITE_P){
+                                        if(!rank->budget->trySplitReq(queue[i], queue))
+                                            continue;
+                                    }
+                                    
+                                }
+#endif
                                 // scyu: found issuable, push the packet into reordering buffer
                                 reordering_buffer.push_back(queue[i]);
                                 reordering_buffer_index.push_back(i);
@@ -378,6 +440,15 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
 #endif
                             }
                         }
+                        
+                        // make sure read woundn't interleave an in-progressed write
+                        if(!read_first && WriteInProgressed[nextRank][nextBank] && !BUDGET_AWARE_SCHEDULE)
+                            break;
+#if NO_SUB_REQUEST
+                        if(!read_first && WriteInProgressed[nextRank][nextBank] && BUDGET_AWARE_SCHEDULE)
+                            break;
+#endif
+
                         read_first = !read_first;
                     }while(!foundIssuable && (++round) < 2);
                 }
@@ -412,26 +483,22 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                 size_t request_to_be_issued = 0;
 #if 1
                 // #candidates > 1 && write first, traverse the reodering buffer
-                if(reordering_buffer.size() > 1 && reordering_buffer[0]->busPacketType == WRITE_P){
+                if(BUDGET_AWARE_SCHEDULE && reordering_buffer.size() > 1 && reordering_buffer[0]->busPacketType == WRITE_P){
                     //cout << "write first, size of reordering buffer " << reordering_buffer.size()<< endl;
+                    vector<BusPacket *> &queue = getCommandQueue(reordering_buffer[0]->rank, reordering_buffer[0]->bank); 
                     Rank* rank = _ranks->at(reordering_buffer[0]->rank);
                     float score = 0.0f;
                     float max_score = 0.0f;
-                    int w_counter = 0;
                     for(size_t i=0; i<=reordering_buffer.size()-1; ++i){
-                        if(reordering_buffer[i]->busPacketType == WRITE_P){
-                            score = rank->budget->countPriority(reordering_buffer[i]->diffMask);
+                        if(reordering_buffer[i]->busPacketType == WRITE_P && rank->budget->trySplitReq(reordering_buffer[i], queue)){
+                            score = rank->budget->countPriority(reordering_buffer[i]->token);
                             if(score > max_score){
                                 max_score = score;
                                 request_to_be_issued = i;
                             }
-                            w_counter++;
                         }
                     }
-                    //cout << "#write = " << w_counter << endl;
-                }else if(reordering_buffer.size() == 1 && reordering_buffer[0]->busPacketType == WRITE_P){
-                    //cout << "#write = 1" << endl;
-                }else if(reordering_buffer.size() > 1 && reordering_buffer[0]->busPacketType == ACTIVATE){
+                }else if(BUDGET_AWARE_SCHEDULE && reordering_buffer.size() > 1 && reordering_buffer[0]->busPacketType == ACTIVATE){
                     vector<BusPacket *> &queue = getCommandQueue(reordering_buffer[0]->rank, reordering_buffer[0]->bank); 
                     // only reorder for write first
                     if(queue[reordering_buffer_index[0]+1]->busPacketType == WRITE_P){
@@ -439,33 +506,71 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                         Rank* rank = _ranks->at(reordering_buffer[0]->rank);
                         float max_score = 0.0f;
                         float score = 0.0f;
-                        int w_counter = 0;
                         for(size_t i=0; i<=reordering_buffer.size()-1; ++i){
                             if(reordering_buffer[i]->busPacketType == ACTIVATE){
                                 if(reordering_buffer_index[i]+1 < queue.size() && queue[reordering_buffer_index[i]+1]->busPacketType == WRITE_P 
-                                        && rank->budget->issuable(queue[reordering_buffer_index[i]+1]->diffMask)){
-                                    score = rank->budget->countPriority(queue[reordering_buffer_index[i]+1]->diffMask);
+                                        //&& rank->budget->issuable(queue[reordering_buffer_index[i]+1]->token)){
+                                        //&& isIssuable(queue[reordering_buffer_index[i]+1]) && rank->budget->trySplitReq(queue[reordering_buffer_index[i]+1], queue)){
+                                        && rank->budget->trySplitReq(queue[reordering_buffer_index[i]+1], queue)){
+                                    score = rank->budget->countPriority(queue[reordering_buffer_index[i]+1]->token);
                                     if(score > max_score){
                                         max_score = score;
                                         request_to_be_issued = i;
                                     }
-                                    w_counter++;
                                 }
                             }
                         }
-                        //cout << "#write = " << w_counter << endl;
                     }
                 }
-#endif
+#endif           
                 //if(request_to_be_issued != 0)
                 //    cout << "reordered" << endl;
 
                 // issue the request
                 vector<BusPacket *> &queue = getCommandQueue(reordering_buffer[request_to_be_issued]->rank, reordering_buffer[request_to_be_issued]->bank); 
                 *busPacket = queue[reordering_buffer_index[request_to_be_issued]];
+
+                if((*busPacket)->busPacketType == WRITE_P && !BUDGET_AWARE_SCHEDULE){
+                    if((*busPacket)->subReqID == SUB_REQUEST_COUNT-1){
+                        // write transaction end
+                        WriteInProgressed[(*busPacket)->rank][(*busPacket)->bank] = false;
+                    }else if((*busPacket)->subReqID == 0){
+                        // write transaction start
+                        WriteInProgressed[(*busPacket)->rank][(*busPacket)->bank] = true;
+                        TransInProgressed[(*busPacket)->rank][(*busPacket)->bank] = (*busPacket)->transID;
+                    }
+                    //cout << (*busPacket)->transID << " " << (*busPacket)->subReqID << endl;
+                }else if((*busPacket)->busPacketType == WRITE_P && BUDGET_AWARE_SCHEDULE){
+                    Rank* r = _ranks->at((*busPacket)->rank);
+                    // check could be split or not
+                    if(r->budget->trySplitReq(*busPacket, queue)){
+                        // split it    
+                        r->budget->splitReq(busPacket, queue);
+                    }else if(!r->budget->issuable((*busPacket)->token)){
+                        // if could not be split and not issuable => not really found issuable!
+                        busPacket = NULL;
+                        //cout << "non-issuable" << endl;
+                        return false;
+                    }
+// no sub-request, only dynamic division
+#if NO_SUB_REQUEST
+                    cout << "rank " << (*busPacket)->rank << " bank " << (*busPacket)->bank << endl;
+                    cout << "issue " << (*busPacket)->transID << "-" << (*busPacket)->subReqID << endl; 
+                    if((*busPacket)->subReqID == SUB_REQUEST_COUNT-1){
+                        // write transaction end
+                        WriteInProgressed[(*busPacket)->rank][(*busPacket)->bank] = false;
+                        cout << "tran " << TransInProgressed[(*busPacket)->rank][(*busPacket)->bank] << " end" << endl;
+                    }else if((*busPacket)->subReqID == 0){
+                        // write transaction start
+                        WriteInProgressed[(*busPacket)->rank][(*busPacket)->bank] = true;
+                        TransInProgressed[(*busPacket)->rank][(*busPacket)->bank] = (*busPacket)->transID;
+                        cout << "tran " << (*busPacket)->transID << " start" << endl;
+                    }
+#endif
+                }
                 //if((*busPacket)->busPacketType == WRITE_P){
                 //    Rank* r = _ranks->at(reordering_buffer[request_to_be_issued]->rank);
-                //    cout << r->budget->dumpRequestStatus(queue[reordering_buffer_index[request_to_be_issued]]->diffMask) << endl;
+                //    cout << r->budget->dumpRequestStatus(queue[reordering_buffer_index[request_to_be_issued]]->token) << endl;
                 //}
                 queue.erase(queue.begin()+reordering_buffer_index[request_to_be_issued]);
             }
@@ -813,6 +918,12 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                         currentClockCycle >= bankStates[busPacket->rank][busPacket->bank].nextActivate &&
                         tFAWCountdown[busPacket->rank].size() < 4)
                 {
+                    if(POWER_BUDGETING){
+                        //  scyu: add differential write information 
+                        //  issueable if consumed power < power budget
+                        Rank* r = _ranks->at(busPacket->rank);
+                        r->budget->reclaim(currentClockCycle);
+                    }
                     return true;
                 }
                 else
@@ -828,15 +939,16 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                         rowAccessCounters[busPacket->rank][busPacket->bank] < TOTAL_ROW_ACCESSES)
                 {
                     //  scyu: toggle the power budget constraint 
-#if 1
-                    //  scyu: add differential write information 
-                    //  issueable if consumed power < power budget
-                    Rank* r = _ranks->at(busPacket->rank);
-                    r->budget->reclaim(currentClockCycle);
-                    return r->budget->issuable(busPacket->diffMask);
-#else
-                    return true;
-#endif
+                    if(POWER_BUDGETING){
+                        //  scyu: add differential write information 
+                        //  issueable if consumed power < power budget
+                        Rank* r = _ranks->at(busPacket->rank);
+                        r->budget->reclaim(currentClockCycle);
+                        // for our mechanism, not check issuable here since there is chance to split it
+                        return (BUDGET_AWARE_SCHEDULE) || r->budget->issuable(busPacket->token); 
+                    }else{
+                        return true;
+                    }
                 }
                 else
                 {

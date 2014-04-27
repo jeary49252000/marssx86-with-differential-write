@@ -58,8 +58,11 @@ public:
 	uint64_t address;
 	void *data;
 	// scyu: add differential write information
-    //uint64_t diffMask[8]; // FIXME later
-    uint64_t diffMask[8]; // FIXME later
+    bool isSubReq;
+    uint8_t iteration;
+    uint64_t token[NUM_CHIPS]; 
+    uint64_t diffMask[(LINE_SIZE)>>3]; 
+    uint64_t transID;
     uint64_t timeAdded;
 	uint64_t timeReturned;
 
@@ -67,6 +70,7 @@ public:
 	//functions
 	Transaction(TransactionType transType, uint64_t addr, void *data);
 	Transaction(TransactionType transType, uint64_t addr, void *data, uint64_t diff_mask[]);
+	Transaction(TransactionType transType, uint64_t addr, void *data, uint64_t allocated_token[], bool is_sub_request, uint8_t iter);
 	Transaction(const Transaction &t);
 
 	BusPacketType getBusPacketType()

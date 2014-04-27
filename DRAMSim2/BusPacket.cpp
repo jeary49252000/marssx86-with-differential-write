@@ -109,7 +109,7 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
 
 // scyu: add differential write information
 BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, 
-		unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t diff_mask[],
+		unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t allocated_token[], unsigned iter,
 		ostream &dramsim_log_, uint64_t time) :
 	dramsim_log(dramsim_log_),
 	busPacketType(packtype),
@@ -130,13 +130,50 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
             break;
     }
 
-    // scyu: cpoy diffMask only when there is a legal diff mask
-    if(diff_mask != NULL){
-        for(size_t i=0; i<=(LINE_SIZE>>3)-1; ++i){
-           diffMask[i] = diff_mask[i];
+    // scyu: cpoy allocated_token only when there is a legal diff mask
+    if(allocated_token != NULL){
+        for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+           token[i] = allocated_token[i];
         }
     }
+    // scyu: set sub-request ID
+    subReqID = iter;
 }
+
+// scyu: add differential write information
+BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, 
+		unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t allocated_token[], unsigned iter, uint64_t id,
+		ostream &dramsim_log_, uint64_t time) :
+	dramsim_log(dramsim_log_),
+	busPacketType(packtype),
+	column(col),
+	row(rw),
+	bank(b),
+	rank(r),
+	physicalAddress(physicalAddr),
+	data(dat),
+    transID(id),
+    timeAdded(time)
+{
+    switch(busPacketType){
+        case WRITE:
+        case WRITE_P:
+        case REFRESH:
+            //iterations = getIteration(RETENTION_LEVEL, busPacketType);
+            iterations = 1;
+            break;
+    }
+
+    // scyu: cpoy allocated_token only when there is a legal diff mask
+    if(allocated_token != NULL){
+        for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+           token[i] = allocated_token[i];
+        }
+    }
+    // scyu: set sub-request ID
+    subReqID = iter;
+}
+
 
 
 void BusPacket::print(uint64_t currentClockCycle, bool dataStart)

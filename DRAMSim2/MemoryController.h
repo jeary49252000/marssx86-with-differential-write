@@ -142,6 +142,9 @@ private:
     // scyu: add differential write information 
     uint64_t totalBitSetCount;
     uint64_t totalBitResetCount;
+    
+    uint64_t transactionID;
+    
 
     map<int, int> writeIterDistribution;
     map<int, int> refreshIterDistribution;

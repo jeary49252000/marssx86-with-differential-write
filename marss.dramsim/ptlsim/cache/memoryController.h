@@ -36,7 +36,9 @@
 #ifdef DRAMSIM
 #include <DRAMSim.h>
 using DRAMSim::MultiChannelMemorySystem;
-static const unsigned dramsim_transaction_size = 64;
+// scyu: add differential write information
+// make sure dramsim transaction size equal to last level cache line size
+static const unsigned dramsim_transaction_size = LLC_SIZE; 
 #endif
 
 
@@ -148,6 +150,7 @@ class MemoryController : public Controller
         // scyu: add statistical information
         W64 totalBitSetCount;
         W64 totalBitResetCount;
+        W64 silientStoreCount;
         W64 totalPageFaultCount;            // failed to get the set/rest information
         std::map<W8, W64> histBitSet;      // # bit set each write
         std::map<W8, W64> histBitReset;    // # bit reset each write

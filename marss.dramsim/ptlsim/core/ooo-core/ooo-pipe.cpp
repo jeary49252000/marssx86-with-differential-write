@@ -2112,11 +2112,12 @@ int ReorderBufferEntry::commit() {
                 prev_data[i] = 0;
             Waddr  aligned_physaddr = ((lsq->physaddr<<3) & ~(((unsigned long)LLC_SIZE) - 1L));
             size_t new_data_index = ((lsq->physaddr<<3)-aligned_physaddr) >> 3;
-            
+
             //if(core.memoryHierarchy->get_data_from_map(floor(lsq->physaddr << 3, 64), prev_data) == false){
             if(core.memoryHierarchy->get_data_from_map(aligned_physaddr, prev_data, size_in_map) == false){
-            // first access to write memory at lsq->physaddr
+                // first access to write memory at lsq->physaddr
                 // => store current value in map as previous value for future
+#if 1
                 //cout << "-----------------" << lsq->virtaddr << " " << new_data_index <<"-----------------"<< endl;
                 PageFaultErrorCode pfec = 0;
                 int exception = 0, mmio = 0;  
@@ -2131,7 +2132,7 @@ int ReorderBufferEntry::commit() {
 
                         if (raise_page_fault!=0){
                             // raise page fault: -1 => cannot handle fault, 1 => generate PF fault
-                            //cerr << "ooo-pipe page fault: " << std::hex << virtaddr << endl; 
+                            //cout << "ooo-pipe page fault: " << std::hex << virtaddr << endl; 
                         }else{
                             // hadle that fault successfully
                             thread.ctx.check_and_translate (virtaddr, 0, false, false, exception, mmio, pfec);
@@ -2145,6 +2146,12 @@ int ReorderBufferEntry::commit() {
                     //cout << lsq->virtaddr+((i-new_data_index)<<3) << "\t"<< std::bitset<64>(prev_data[i]) << endl;
                 }
                 //core.memoryHierarchy->insert_data_to_map(floor(lsq->physaddr << 3, 64), curr_data);
+#else
+                for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i){
+                    srand(time(NULL));
+                    prev_data[i] = rand();
+                }
+#endif
                 core.memoryHierarchy->insert_data_to_map(aligned_physaddr, prev_data, size_in_map);
             }else{
                 // do nothing, we only update the previous data map on (1) first store in pipeline
@@ -2155,6 +2162,8 @@ int ReorderBufferEntry::commit() {
             // add new data to request
             prev_data[new_data_index] = lsq->data;
             request->set_data(prev_data);
+           
+            //cout << "CPU write " << lsq->data << " (index: "<< new_data_index << ") @" << aligned_physaddr << endl;
             
             // set virtual addree
             request->set_virtual_address(lsq->virtaddr);

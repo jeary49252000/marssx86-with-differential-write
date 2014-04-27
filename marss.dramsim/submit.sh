@@ -1,10 +1,7 @@
 #/usr/bin/bash
 
-
 Suffix4=( 
-w320.r80.b16.c8
 w640.r80.b16.c8
-w1280.r80.b16.c8
 );
 Suffix3=( 
 w160.r80.b8.c4
@@ -36,8 +33,14 @@ w320.r80.b16
 #Benchmark=( 410.bwaves 429.mcf 436.cactusADM 470.lbm 473.astar 437.lieslie3d);
 
 #Benchmark=( 410.bwaves 429.mcf 470.lbm 434.zeusmp 436.cactusADM 437.leslie3d 450.soplex 459.GemsFDTD 462.libquantum 473.astar );
-#Benchmark=( 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 473.astar.8c);
-Benchmark=( 462.libquantum.8c );
+#Benchmark=( 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 473.astar.8c);
+#Benchmark=( 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c);
+#Benchmark=( parsec.freqmine.8c parsec.x264.8c parsec.vips.8c parsec.facesim.8c);
+#Benchmark=( 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c parsec.x264.8c parsec.facesim.8c);
+#Benchmark=( 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c);
+#Benchmark=(462.libquantum.8c 470.lbm.8c);
+Benchmark=( 410.bwaves.8c 410.bwaves.8c 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 410.bwaves.8c 462.libquantum.8c 470.lbm.8c parsec.x264.8c parsec.facesim.8c);
+#Benchmark=( 437.leslie3d.8c 470.lbm.8c );
 
 #Benchmark=( 459.GemsFDTD 462.libquantum 473.astar );
 #Benchmark=( 410.bwave 429.mcf 437.leslie3d 470.lbm 473.astar );

@@ -1499,9 +1499,20 @@ extern "C" void update_progress() {
     //while (sb.size() < 160) sb << ' ';
 
     // scyu: dump ipc at runtime
-    if likely(sim_cycle != 0)
-        sb << endl << "Current ipc: " << floatstring((float)total_insns_committed / sim_cycle, 3);
-    
+    if likely(sim_cycle != 0){
+        static bool warmup = false;
+        //static W64 warmup_insts = 20000000; // 20 M
+        //static W64 warmup_insts = 200000000; // 200 M
+        static W64 warmup_insts = 5010000000; // for long run
+        static W64 warmup_cycles = 0;
+        if(!warmup && abs(total_insns_committed-warmup_insts) <= 100000){
+            warmup = true;
+            warmup_insts = total_insns_committed;
+            warmup_cycles = sim_cycle;
+        }else if(warmup){
+            sb << endl << "Current ipc (w/ warmup): " << floatstring((float)(total_insns_committed-warmup_insts) / (sim_cycle-warmup_cycles), 3);
+        }
+    }
     ptl_logfile << sb, endl;
     if (!config.quiet) {
         cerr << "\r  ", sb;

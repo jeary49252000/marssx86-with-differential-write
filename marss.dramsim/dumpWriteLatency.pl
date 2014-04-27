@@ -9,7 +9,10 @@ $pattern = $ARGV[1] || '.';
 while(my $file = shift  @file_list){
     if($file ne "." and $file ne ".."){
         #print $file.":\t".parseIPC($ARGV[0]."/".$file)."\n";
-        print $file.":\t".`sed -n \'/current average write latency/p\' $ARGV[0]/$file | awk \'{print \$6}\' | tail -1` if($file =~ m/$pattern/);
+        # ptlsim log
+        print $file.":\t".`sed -n \'/current average write latency/p\' $ARGV[0]/$file | awk \'{print \$6}\' | tail -1`."\n" if($file =~ m/$pattern/);
+        # dramsim log
+        #print $file.":\t".`sed -n \'/final average write latency/p\' $ARGV[0]/$file | awk \'{print \$6}\' | tail -1`."\n" if($file =~ m/$pattern/);
     }
 }
 closedir(DIR);

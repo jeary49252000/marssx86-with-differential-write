@@ -96,6 +96,7 @@ MemoryController::MemoryController(W8 coreid, const char *name,
     totalBitSetCount = 0;
     totalBitResetCount = 0;
     totalPageFaultCount = 0;
+    silientStoreCount = 0;
 
     histBitSet.clear();
     histBitReset.clear();
@@ -284,10 +285,12 @@ bool MemoryController::handle_interconnect_cb(void *arg)
 
         // count the different token when success
         if(!failedToCountDifference){
+            //cout << "@" << physicalAddress << endl;
             for(size_t i=0; i<=size_in_map-1; ++i){
                 //cout << "Prev Data: " << std::bitset<64>(prev_data[i]) << " [" << std::hex << prev_data[i] << "]"<< endl;
                 //cout << "New  Data: " << std::bitset<64>(memRequest->get_data_at(i)) << " [" << std::hex << memRequest->get_data_at(i) << "]"<< endl;
                 W64 diff = prev_data[i] ^ memRequest->get_data_at(i);
+                //cout << std::bitset<64>(diff) << " ";
                 //W64 diff = (W64) -1;
                 W64 set, reset;    
                 
@@ -305,10 +308,12 @@ bool MemoryController::handle_interconnect_cb(void *arg)
                 totalBitResetCount += reset;
                 histBitSet[set]++;
                 histBitReset[reset]++;
+                if(set == 0 && reset == 0) silientStoreCount++;
                 // FIXME: scyu
                 histBitChanged[set+reset]++;
                 distBitChangedPerChip[i%CHIP_NUM] += (set+reset);
             }
+            //cout << endl;
         }
 
         // update the lookup map
@@ -321,10 +326,11 @@ bool MemoryController::handle_interconnect_cb(void *arg)
      * will be modified. Therefore, data writebacks will only happen on an
      * MEMORY_OP_UPDATE operation when a dirty line is evicted from the cache. 
      */
-
+    
     bool isWrite = memRequest->get_type() == MEMORY_OP_UPDATE;
     // scyu: add transaction with differential information
     bool accepted = mem->addTransaction(isWrite, physicalAddress, (isWrite)? diff_mask:NULL);
+    
     if(diff_mask){
         free(diff_mask);
         diff_mask = NULL;
@@ -359,6 +365,7 @@ void MemoryController::printDifferentialWriteInfo()
 {
     stringbuf sb;
     sb << "Differential wirte - # write requests:\t" << totalWriteCount << endl;
+    sb << "Differential wirte - # silient stores / # write requests:\t" << (double) silientStoreCount / ((LLC_SIZE >> 3)*totalWriteCount) << endl;
     sb << "Differential wirte - # write with page fault / # total write:\t" << (double) totalPageFaultCount / totalWriteCount << endl;
     sb << "Differential wirte - # set bits:\t" << totalBitSetCount << endl;
     sb << "Differential wirte - # reset bits:\t" << totalBitResetCount << endl;
@@ -409,7 +416,6 @@ void MemoryController::read_return_cb(uint id, uint64_t addr, uint64_t cycle)
     // no delay here since we've already waited up to this cycle
     //	Message *message = pending_map[addr];
     MemoryQueueEntry *queueEntry = NULL;
-
 
     memdebug("[DRAMSIM] READ RETURN 0x"<<std::hex<<addr<<std::dec);
 

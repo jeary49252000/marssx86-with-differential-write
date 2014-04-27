@@ -113,7 +113,10 @@ MemoryController::MemoryController(MemorySystem *parent, CSVWriter &csvOut_, ost
 	}
 
     resetHistory();
-    
+
+    // scyu: for sub-requests, add transaction ID information
+    transactionID = 0;
+
     detailSim = true;
     writeBarrier = false;
 }
@@ -134,7 +137,7 @@ void MemoryController::receiveFromBus(BusPacket *bpacket)
 		bpacket->print();
 	}
 
-	//add to return read data queue
+    //add to return read data queue
 	returnTransaction.push_back(new Transaction(RETURN_DATA, bpacket->physicalAddress, bpacket->data));
 	totalReadsPerBank[SEQUENTIAL(bpacket->rank,bpacket->bank)]++;
 
@@ -207,7 +210,7 @@ void MemoryController::update()
 		if (cmdCyclesLeft == 0) //packet is ready to be received by rank
 		{
 			(*ranks)[outgoingCmdPacket->rank]->receiveFromBus(outgoingCmdPacket);
-			outgoingCmdPacket = NULL;
+            outgoingCmdPacket = NULL;
 		}
 	}
 
@@ -220,7 +223,11 @@ void MemoryController::update()
 			//inform upper levels that a write is done
 			if (parentMemorySystem->WriteDataDone!=NULL)
 			{
-				(*parentMemorySystem->WriteDataDone)(parentMemorySystem->systemID,outgoingDataPacket->physicalAddress, currentClockCycle);
+                // scyu: sub-request, check commit packet here
+                // only commit the last packet
+                if(outgoingDataPacket->busPacketType == DATA && outgoingDataPacket->subReqID == SUB_REQUEST_COUNT-1){
+				    (*parentMemorySystem->WriteDataDone)(parentMemorySystem->systemID,outgoingDataPacket->physicalAddress, currentClockCycle);
+                }
 
                 commandQueue.WriteReqNum[outgoingDataPacket->rank][outgoingDataPacket->bank] --;
                 commandQueue.queuedWriteCnt --;
@@ -319,10 +326,10 @@ void MemoryController::update()
 	{
 		if (poppedBusPacket->busPacketType == WRITE || poppedBusPacket->busPacketType == WRITE_P)
 		{
-
-			writeDataToSend.push_back(new BusPacket(DATA, poppedBusPacket->physicalAddress, poppedBusPacket->column,
+            // scyu: add information for sub-request
+            writeDataToSend.push_back(new BusPacket(DATA, poppedBusPacket->physicalAddress, poppedBusPacket->column,
 			                                    poppedBusPacket->row, poppedBusPacket->rank, poppedBusPacket->bank,
-			                                    poppedBusPacket->data, dramsim_log, poppedBusPacket->timeAdded));
+			                                    poppedBusPacket->data, poppedBusPacket->token, poppedBusPacket->subReqID, dramsim_log, poppedBusPacket->timeAdded));
 			writeDataCountdown.push_back(WL);
 		}
 
@@ -460,13 +467,12 @@ void MemoryController::update()
                     bankStates[rank][bank].nextRead = bankStates[rank][bank].nextActivate;
                     bankStates[rank][bank].nextWrite = bankStates[rank][bank].nextActivate;
                 }
-                {
-#if 1 
-                        //scyu
-                        Rank* r = ranks->at(rank);
-                        r->budget->consume(poppedBusPacket->diffMask, bank, bankStates[rank][bank].nextWrite);
-                        //cout << "balance:\t" << r->budget->dumpBalanceStatus() << endl;
-#endif 
+
+                if(POWER_BUDGETING){
+                    //scyu
+                    Rank* r = ranks->at(rank);
+                    r->budget->consume(poppedBusPacket->token, bank, bankStates[rank][bank].nextWrite);
+                    //cout << "balance:\t" << r->budget->dumpBalanceStatus() << endl;
                 }
                 break;
             case ACTIVATE:
@@ -552,9 +558,9 @@ void MemoryController::update()
             ERROR("== Error - Command Bus Collision");
             exit(-1);
         }
+
         outgoingCmdPacket = poppedBusPacket;
         cmdCyclesLeft = tCMD;
-
     }
 
     for (size_t i=0;i<transactionQueue.size();i++)
@@ -639,7 +645,7 @@ void MemoryController::update()
             // scyu: add differential write information
             BusPacket *command = new BusPacket(bpType, transaction->address,
                     newTransactionColumn, newTransactionRow, newTransactionRank,
-                    newTransactionBank, transaction->data, transaction->diffMask,dramsim_log, transaction->timeAdded);
+                    newTransactionBank, transaction->data, transaction->token, transaction->iteration, transaction->transID, dramsim_log, transaction->timeAdded);
 
             commandQueue.enqueue(ACTcommand);
             commandQueue.enqueue(command);
@@ -897,8 +903,6 @@ bool MemoryController::WillAcceptTransaction(unsigned rank, unsigned bank, bool 
 //allows outside source to make request of memory system
 bool MemoryController::addTransaction(Transaction *trans)
 {
-
-
     if (WillAcceptTransaction())
     {
         unsigned chan,rank,bank,row,col;
@@ -906,12 +910,41 @@ bool MemoryController::addTransaction(Transaction *trans)
 
         if(trans->transactionType == DATA_READ){
             commandQueue.ReadReqNum[rank][bank] ++;
+            trans->timeAdded = currentClockCycle;
+            transactionQueue.push_back(trans);
         }else{ //write
-            commandQueue.WriteReqNum[rank][bank] ++;
+            // scyu: add differential write information
+            // split sub-request here.
+            
+            uint64_t sub_mask[SUB_REQUEST_COUNT][(LINE_SIZE>>3)/SUB_REQUEST_COUNT];
+            uint64_t allocated_token[NUM_CHIPS];
+#if 1
+            for(size_t i=0; i<=(LINE_SIZE>>3)-1; ++i){
+                    sub_mask[i%SUB_REQUEST_COUNT][i/SUB_REQUEST_COUNT] = trans->diffMask[i];
+            }
+#endif         
+            for(size_t i=0; i<=SUB_REQUEST_COUNT-1; ++i){
+#if 0
+                for(size_t j=0; j<=((LINE_SIZE>>3)/SUB_REQUEST_COUNT)-1; ++j){
+                    sub_mask[i][j] = trans->diffMask[i*((LINE_SIZE>>3)/SUB_REQUEST_COUNT)+j];
+                }
+#endif
+                // assign allocated token info to transactions
+                Rank* r = ranks->at(rank);
+                r->budget->mappingFunction(sub_mask[i],  allocated_token);
+                Transaction *sub_trans = new Transaction(trans->transactionType, trans->address, trans->data, allocated_token, true, i);
+                sub_trans->timeAdded = currentClockCycle;
+                sub_trans->transID = transactionID; 
+                transactionQueue.push_back(sub_trans);
+                commandQueue.WriteReqNum[rank][bank] ++;
+                /*
+                for(size_t k=0; k<=7; k++)
+                    cout << allocated_token[k] << " ";
+                cout <<endl;
+                */
+            }
+            transactionID++;
         }
-
-        trans->timeAdded = currentClockCycle;
-        transactionQueue.push_back(trans);
         return true;
     }
     else 

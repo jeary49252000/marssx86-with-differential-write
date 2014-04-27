@@ -5,7 +5,7 @@
 #Benchmark=( 473.astar 437.leslie3d );
 #Benchmark=( 410.bwaves 434.zeusmp 437.leslie3d 470.lbm 473.astar );
 #Benchmark=( 410.bwaves 429.mcf 433.milc 434.zeusmp 436.cactusADM 437.leslie3d 450.soplex 459.GemsFDTD 462.libquantum 470.lbm 473.astar stream mummer);
-Benchmark=( 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 473.astar.8c);
+Benchmark=( 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 473.astar.8c parsec.freqmine.8c parsec.x264.8c parsec.vips.8c parsec.facesim.8c);
 
 abs_path=/home/r01/scyu/diffWrite/Wonderland
 
@@ -83,7 +83,7 @@ sleep 5
 send "\r"
 expect eof' > script/exedir/$m.$i.$j.$k.$l.sh ;
 
-echo '#PBS -l nodes=1:ppn=1:scyu
+echo '#PBS -l nodes=1:ppn=2:scyu
 cd '$MARSS_DIRECTOR';
 if [ ! -d "'$IMAGE_DIRECTOR'" ]; then
 	mkdir '$IMAGE_DIRECTOR'
@@ -92,20 +92,25 @@ cp '$IMAGE_SOURCE_DIRECTOR''$m'.qcow '$IMAGE_DIRECTOR''$m'.'$i'.'$j'.'$k'.'$l'.q
 ./script/exedir/'$m'.'$i'.'$j'.'$k'.'$l'.sh;
 unlink '$IMAGE_DIRECTOR''$m'.'$i'.'$j'.'$k'.'$l'.qcow; ' > script/$m.$i.$j.$k.$l.sh ;
 
-
 # -machine private_L3
 # -stopinsns 1501000000
+# -dramsim-system-ini-file ini/System/default.ini
+# -dramsim-system-ini-file ini/System/budget_schedule.ini
 # simconfig script
+#TYPE='default'
+#TYPE='budget'
+TYPE='budget_schedule'
+ATTR='scheme2.r4.nosub.dynamic'
 echo '-corefreq 4000000000
 -machine private_L3
 -stopinsns 1501000000
 -kill-after-run
 -logfilesize 268435456
--logfile '$abs_path'/marss.dramsim/log/'$m'.'$i'.'$j'.'$k'.'$l'.log.8c
+-logfile '$abs_path'/marss.dramsim/log/'$m'.'$i'.'$j'.'$k'.'$l'.log.8c.'$ATTR'.'$TYPE'
 -dramsim-device-ini-file ini/Ini/'$i'_'$j'_'$k'_'$l'.ini
 -dramsim-pwd '$abs_path'/DRAMSim2
--dramsim-system-ini-file ini/System/default.ini
--dramsim-results-dir-name '$abs_path'/marss.dramsim/log
+-dramsim-system-ini-file ini/System/'$TYPE'.ini
+-dramsim-results-dir-name '$abs_path'/marss.dramsim/log/dramsim.'$m'_'$i'_'$j'_'$k'_'$l'.log.8c.'$ATTR'.'$TYPE'
 -run true' > simcfg/$m.$i.$j.$k.$l.cfg;
                                                     done;
 												done;

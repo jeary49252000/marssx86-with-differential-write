@@ -4,27 +4,39 @@
 using namespace DRAMSim;
 
 #define DEBUG 0
-
+#define DYNAMIC_DIVISION 1
 #define SHARED_BUDGET 0
-
 #define BYTE_INTERLEAVING 0
 
 PowerBudget::PowerBudget(){
+    line_num = (LINE_SIZE>>3)/SUB_REQUEST_COUNT;
     token = (int32_t*) calloc(NUM_CHIPS,sizeof(int32_t));
     issued_requests = (Request*) calloc(NUM_BANKS,sizeof(Request));
     for(size_t i=0; i<=NUM_BANKS-1; ++i)
-        issued_requests[i].line = (uint64_t*) calloc(LINE_SIZE>>3,sizeof(uint64_t));
+        issued_requests[i].token = (uint64_t*) calloc(line_num,sizeof(uint64_t));
 }
 
 PowerBudget::PowerBudget(uint16_t budget){
-    line_num = LINE_SIZE>>3;
+    line_num = (LINE_SIZE>>3)/SUB_REQUEST_COUNT;
     token = (int32_t*) malloc(NUM_CHIPS*sizeof(int32_t));
     issued_requests = (Request*) calloc(NUM_BANKS,sizeof(Request));
     for(size_t i=0; i<=NUM_BANKS-1; ++i)
-        issued_requests[i].line = (uint64_t*) calloc(LINE_SIZE>>3,sizeof(uint64_t));
+        issued_requests[i].token = (uint64_t*) calloc(line_num,sizeof(uint64_t));
     setBudget(budget);
+
+    if(POWER_BUDGETING)
+        cout << "POWER BUDGETING" << endl;
+    if(BUDGET_AWARE_SCHEDULE){
+        cout << "POWER BUDGET AWARE SCHEDULING ON" << endl;
+    }
 #if SHARED_BUDGET
-    cerr << "SHARED POWER BUDGET CONFIGURATION" << endl;
+    cout << "SHARED POWER BUDGET CONFIGURATION" << endl;
+#endif
+
+#if DYNAMIC_DIVISION
+    cout << "DYNAMIC CDIVISION" << endl;
+#else
+    cout << "STATIC DIVISION" << endl;
 #endif
 }
 
@@ -34,11 +46,12 @@ void PowerBudget::setBudget(uint16_t budget){
         token[i] = budget;
 }
 
-bool PowerBudget::consume(uint64_t* line, size_t bank_no, uint64_t completed_time){
-    uint64_t allocated_token[NUM_CHIPS];
+bool PowerBudget::consume(uint64_t* allocated_token, size_t bank_no, uint64_t completed_time){
     bool    out_of_token = false;
 
-    mappingFunction(line, allocated_token);
+#if DEBUG
+    cout << "consume:\t" << dumpBudgetStatus(allocated_token) << endl;
+#endif
 
 #if SHARED_BUDGET
     uint32_t remain_token = 0;
@@ -56,11 +69,11 @@ bool PowerBudget::consume(uint64_t* line, size_t bank_no, uint64_t completed_tim
 #endif
 
     if(out_of_token){
-        reclaimLine(line);
+        reclaimLine(allocated_token);
         return false;
     }
     for(size_t i=0; i<=line_num-1; ++i)
-        issued_requests[bank_no].line[i] = line[i];     
+        issued_requests[bank_no].token[i] = allocated_token[i];     
     issued_requests[bank_no].completed_time = completed_time;     
     return true;
 }
@@ -72,11 +85,8 @@ uint32_t inline PowerBudget::countTokens(uint64_t sub_line){
     return counter;
 }
 
-bool PowerBudget::issuable(uint64_t* line){
-    uint64_t allocated_token[NUM_CHIPS];
+bool PowerBudget::issuable(uint64_t* allocated_token){
     bool   out_of_token = false;
-
-    mappingFunction(line, allocated_token);
 
 #if SHARED_BUDGET
     uint32_t total_allocated = 0;
@@ -87,23 +97,25 @@ bool PowerBudget::issuable(uint64_t* line){
     }
     out_of_token = total_allocated > remain_token;
 #else
-    for(size_t i=0; i<=NUM_CHIPS-1; ++i)
+    for(size_t i=0; i<=NUM_CHIPS-1; ++i){
         out_of_token |= (allocated_token[i] > token[i]);
+        //cout << i << ": " << token[i] << "(" << allocated_token[i] << ") " << endl; 
+    }
 #endif
 
 #if DEBUG
     if(out_of_token){
-        cout << "out of budget:\t" << dumpBudgetStatus(allocated_token) << endl;
+        //cout << "out of budget:\t" << dumpBudgetStatus(allocated_token) << endl;
         //PRINT("out of budget:\t" << dumpBudgetStatus() << endl);
     }
 #endif
     return !out_of_token;
 }
 
-void PowerBudget::reclaimLine(uint64_t* line){
-    uint64_t allocated_token[NUM_CHIPS];
-
-    mappingFunction(line, allocated_token);
+void PowerBudget::reclaimLine(uint64_t* allocated_token){
+#if DEBUG
+    cout << "reclaim:\t" << dumpBudgetStatus(allocated_token) << endl; 
+#endif
     for(size_t i=0; i<=NUM_CHIPS-1; ++i){
         token[i] += allocated_token[i]; 
     }
@@ -113,9 +125,9 @@ void PowerBudget::reclaim(uint64_t current_time){
     for(size_t i=0; i<=NUM_BANKS-1; ++i){
         if((current_time >= issued_requests[i].completed_time) 
                 && (issued_requests[i].completed_time > 0)){
-            reclaimLine(issued_requests[i].line);
+            reclaimLine(issued_requests[i].token);
             for(size_t j=0; j<=line_num-1; ++j)
-                issued_requests[i].line[j] = 0;     
+                issued_requests[i].token[j] = 0;     
             issued_requests[i].completed_time = 0;
         }
     }
@@ -130,14 +142,12 @@ string PowerBudget::dumpBudgetStatus(uint64_t* allocated_token){
     return ret.str();
 }
 
-string PowerBudget::dumpRequestStatus(uint64_t* line){
-    uint64_t allocated_token[NUM_CHIPS];
+string PowerBudget::dumpRequestStatus(uint64_t* allocated_token){
     stringstream ret;
 
     uint64_t max = 0;
     size_t ind = 0;
 
-    mappingFunction(line, allocated_token);
     for(size_t i=0; i<=NUM_CHIPS-1; ++i){
         //ret << token[i] << "(" << allocated_token[i] << ") ";  
         ret << allocated_token[i] << "\t";  
@@ -192,10 +202,111 @@ void PowerBudget::mappingFunction(uint64_t* line, uint64_t allocated_token[]){
 #endif
 }
 
-float PowerBudget::countPriority(uint64_t* line){
-    uint64_t allocated_token[NUM_CHIPS];
-    
-    mappingFunction(line, allocated_token);
+bool PowerBudget::trySplitReq(BusPacket* req, vector<BusPacket *> &queue){
+    vector<size_t> victim_index;
+
+    // find victims
+    for(size_t i=0; i<=queue.size()-1; ++i){
+        if(req == queue[i]){
+            // do nothing here
+        }else if(queue[i]->busPacketType == WRITE_P && queue[i]->transID == req->transID){
+            victim_index.push_back(i); 
+        }
+    }
+    // return true if there is any victim or issuable w/o spliting
+#if DYNAMIC_DIVISION 
+    return ((victim_index.size() >= 1) || issuable(req->token));
+#else
+    return issuable(req->token);
+#endif
+}
+
+bool PowerBudget::splitReq(BusPacket** req, vector<BusPacket *> &queue){
+    vector<size_t> victim_index;
+    uint64_t loan[NUM_CHIPS];
+    bool need_split = false;
+
+    // determine whether there is a need to split
+    for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+        loan[i] = ((*req)->token[i] > token[i])? (*req)->token[i] - token[i] : 0;
+#if DYNAMIC_DIVISION
+        need_split |= loan[i] > 0;
+#endif
+    }
+
+    // no need to split
+    if(!need_split){
+            // try loaning to the other
+            // FIXME: only try the last one now
+            bool could_split = false;
+            for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+                loan[i] = (token[i] > (*req)->token[i])? token[i] - (*req)->token[i] : 0;
+                loan[i] = (loan[i] > queue[victim_index.back()]->token[i])? queue[victim_index.back()]->token[i] : loan[i];
+#if DYNAMIC_DIVISION
+                //could_split |= loan[i] > 0;
+#endif
+            }
+            if(could_split){
+                for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+                    loan[i] = loan[i]/2; // tunable 
+                    //loan[i] = 0; // tunable 
+                    //cout << (*req)->token[i] << " " << queue[victim_index.back()]->token[i] << endl;
+                    (*req)->token[i] += loan[i];
+                    queue[victim_index.back()]->token[i] -= loan[i];
+                    //cout << (*req)->token[i] << " " << queue[victim_index.back()]->token[i] << endl;
+                }   
+                //cout << "loaned" << endl;
+            }
+    }else{
+        // find victims
+        for(size_t i=0; i<=queue.size()-1; ++i){
+            if((*req) == queue[i]){
+
+            }else if(queue[i]->busPacketType == WRITE_P && queue[i]->transID == (*req)->transID){
+                victim_index.push_back(i); 
+            }
+        }
+
+        if(victim_index.size() == 0){
+            // fail to find any victim
+            return false;
+        }
+
+        // check if any victim would be assigned too many #token after split
+        bool victim_out_of_budget = false;
+        for(size_t i=0; i<=victim_index.size()-1; ++i){
+            for(size_t j=0; j<=NUM_CHIPS-1; ++j){
+                victim_out_of_budget |= ((queue[victim_index[i]]->token[j] + loan[j]/victim_index.size()) > chip_budget);
+            }
+        }
+        if(victim_out_of_budget){
+            // need split but fail to split
+            return false;
+        }else{
+            // do split
+            for(size_t j=0; j<=NUM_CHIPS-1; ++j){
+                (*req)->token[j] -= loan[j]; 
+            }
+            for(size_t i=0; i<=victim_index.size()-1; ++i){
+                for(size_t j=0; j<=NUM_CHIPS-1; ++j){
+                    //cout << queue[victim_index[i]]->token[j] << " + " << loan[j] / victim_index.size() << " = " ; 
+                    queue[victim_index[i]]->token[j] += loan[j] / victim_index.size();
+                    //cout << queue[victim_index[i]]->token[j] << endl;
+                }
+            }
+        }
+        // let last one take over the remainder tokens
+        /*
+           for(size_t j=0; j<=NUM_CHIPS-1; ++j){
+           queue[victim_index.back()]->token[j] += loan[j] % victim_index.size();
+           }
+           */
+        //cout << "borrowed" << endl;
+    }
+    return true;
+}
+
+float PowerBudget::countPriority(uint64_t* allocated_token){
 
     // count balance metric: AVERAGE(loading)/MAX(loading)
     // count utilization: SUM(allocated_token)
@@ -219,10 +330,8 @@ float PowerBudget::countPriority(uint64_t* line){
     //return balance_metric;
 }
 
-uint8_t PowerBudget::getHotChips(uint64_t* line, bool* hot_chips){
+uint8_t PowerBudget::getHotChips(uint64_t* allocated_token, bool* hot_chips){
     uint8_t  counter = 0;
-    uint64_t allocated_token[NUM_CHIPS];
-    mappingFunction(line, allocated_token);
 
     for(size_t i=0; i<=NUM_CHIPS-1; ++i){
         hot_chips[i] = false;
@@ -231,6 +340,17 @@ uint8_t PowerBudget::getHotChips(uint64_t* line, bool* hot_chips){
             counter++;
         }
     }
-
     return counter;
+}
+
+uint8_t PowerBudget::getIterations(uint64_t* allocated_token){
+    uint8_t iter = 0;
+    uint8_t max_iter = 0;
+
+    for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+        if((iter = allocated_token[i]/chip_budget) > max_iter){
+            max_iter = iter;
+        }    
+    }
+    return iter;
 }

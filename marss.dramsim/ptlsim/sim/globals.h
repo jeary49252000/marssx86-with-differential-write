@@ -24,7 +24,7 @@
 
 // scyu: add differential write information
 // set LLC size here
-#define LLC_SIZE 64
+#define LLC_SIZE 256
 // set chip number per rank
 #define CHIP_NUM 8
 
