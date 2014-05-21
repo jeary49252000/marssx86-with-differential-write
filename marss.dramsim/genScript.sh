@@ -83,13 +83,13 @@ sleep 5
 send "\r"
 expect eof' > script/exedir/$m.$i.$j.$k.$l.sh ;
 
-echo '#PBS -l nodes=1:ppn=2:scyu
+echo '#PBS -l nodes=1:ppn=1:scyu
 cd '$MARSS_DIRECTOR';
 if [ ! -d "'$IMAGE_DIRECTOR'" ]; then
 	mkdir '$IMAGE_DIRECTOR'
 fi
 cp '$IMAGE_SOURCE_DIRECTOR''$m'.qcow '$IMAGE_DIRECTOR''$m'.'$i'.'$j'.'$k'.'$l'.qcow;
-./script/exedir/'$m'.'$i'.'$j'.'$k'.'$l'.sh;
+'$abs_path'/marss.dramsim/script/exedir/'$m'.'$i'.'$j'.'$k'.'$l'.sh;
 unlink '$IMAGE_DIRECTOR''$m'.'$i'.'$j'.'$k'.'$l'.qcow; ' > script/$m.$i.$j.$k.$l.sh ;
 
 # -machine private_L3
@@ -100,7 +100,7 @@ unlink '$IMAGE_DIRECTOR''$m'.'$i'.'$j'.'$k'.'$l'.qcow; ' > script/$m.$i.$j.$k.$l
 #TYPE='default'
 #TYPE='budget'
 TYPE='budget_schedule'
-ATTR='scheme2.r4.nosub.dynamic'
+ATTR='scheme6.r2.col64.sub.dynamic'
 echo '-corefreq 4000000000
 -machine private_L3
 -stopinsns 1501000000

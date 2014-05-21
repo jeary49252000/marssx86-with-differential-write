@@ -30,8 +30,8 @@ public:
     PowerBudget(uint16_t budget);
     void setBudget(uint16_t budget);
     bool issuable(uint64_t* line);
-    bool trySplitReq(BusPacket* req, vector<BusPacket *> &victims);
-    bool splitReq(BusPacket** req, vector<BusPacket *> &victims);
+    bool issuableAfterShifting(BusPacket* req, vector<BusPacket *> &victims);
+    bool shiftSubReq(BusPacket** req, vector<BusPacket *> &victims);
     bool consume(uint64_t* line, size_t bank_no, uint64_t completed_time);
     void reclaimLine(uint64_t* line);
     void reclaim(uint64_t curr_time);

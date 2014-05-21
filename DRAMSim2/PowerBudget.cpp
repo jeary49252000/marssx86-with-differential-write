@@ -202,7 +202,7 @@ void PowerBudget::mappingFunction(uint64_t* line, uint64_t allocated_token[]){
 #endif
 }
 
-bool PowerBudget::trySplitReq(BusPacket* req, vector<BusPacket *> &queue){
+bool PowerBudget::issuableAfterShifting(BusPacket* req, vector<BusPacket *> &queue){
     vector<size_t> victim_index;
 
     // find victims
@@ -213,7 +213,7 @@ bool PowerBudget::trySplitReq(BusPacket* req, vector<BusPacket *> &queue){
             victim_index.push_back(i); 
         }
     }
-    // return true if there is any victim or issuable w/o spliting
+    // return true if there is any victim or issuable w/o shifting
 #if DYNAMIC_DIVISION 
     return ((victim_index.size() >= 1) || issuable(req->token));
 #else
@@ -221,43 +221,61 @@ bool PowerBudget::trySplitReq(BusPacket* req, vector<BusPacket *> &queue){
 #endif
 }
 
-bool PowerBudget::splitReq(BusPacket** req, vector<BusPacket *> &queue){
+bool PowerBudget::shiftSubReq(BusPacket** req, vector<BusPacket *> &queue){
     vector<size_t> victim_index;
     uint64_t loan[NUM_CHIPS];
-    bool need_split = false;
+    bool need_shift = false;
+    const static uint8_t lower_bound_to_issue_any_other_request = 24;
 
-    // determine whether there is a need to split
+    // determine whether there is a need to shift
     for(size_t i=0; i<=NUM_CHIPS-1; ++i){
         loan[i] = ((*req)->token[i] > token[i])? (*req)->token[i] - token[i] : 0;
 #if DYNAMIC_DIVISION
-        need_split |= loan[i] > 0;
+        need_shift |= loan[i] > 0;
 #endif
     }
 
-    // no need to split
-    if(!need_split){
-            // try loaning to the other
-            // FIXME: only try the last one now
-            bool could_split = false;
-            for(size_t i=0; i<=NUM_CHIPS-1; ++i){
-                loan[i] = (token[i] > (*req)->token[i])? token[i] - (*req)->token[i] : 0;
-                loan[i] = (loan[i] > queue[victim_index.back()]->token[i])? queue[victim_index.back()]->token[i] : loan[i];
+    // no need to shift
+    if(!need_shift){    
+        // "issue more" case
+        // find victims
+        for(size_t i=0; i<=queue.size()-1; ++i){
+            if((*req) == queue[i]){
+
+            }else if(queue[i]->busPacketType == WRITE_P && queue[i]->transID == (*req)->transID){
+                victim_index.push_back(i); 
+            }
+        }
+        if(victim_index.size() == 0){
+            return true;
+        }
+        // try loaning to the other
+        // FIXME: only try the last one now
+        bool could_shift = false;
+        for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+            if(token[i] > lower_bound_to_issue_any_other_request){
+                // preserve those budget for other requests
+                loan[i] = 0;
+                continue;
+            }
+            loan[i] = (token[i] > (*req)->token[i])? token[i] - (*req)->token[i] : 0;
+            loan[i] = (loan[i] > queue[victim_index.back()]->token[i])? queue[victim_index.back()]->token[i] : loan[i];
 #if DYNAMIC_DIVISION
-                //could_split |= loan[i] > 0;
+            could_shift |= loan[i] > 0;
 #endif
-            }
-            if(could_split){
-                for(size_t i=0; i<=NUM_CHIPS-1; ++i){
-                    loan[i] = loan[i]/2; // tunable 
-                    //loan[i] = 0; // tunable 
-                    //cout << (*req)->token[i] << " " << queue[victim_index.back()]->token[i] << endl;
-                    (*req)->token[i] += loan[i];
-                    queue[victim_index.back()]->token[i] -= loan[i];
-                    //cout << (*req)->token[i] << " " << queue[victim_index.back()]->token[i] << endl;
-                }   
-                //cout << "loaned" << endl;
-            }
-    }else{
+        }
+        if(could_shift){
+            for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+                //loan[i] = loan[i]/2; // tunable 
+                //cout << (*req)->token[i] << " " << queue[victim_index.back()]->token[i] << endl;
+                (*req)->token[i] += loan[i];
+                queue[victim_index.back()]->token[i] -= loan[i];
+                //cout << (*req)->token[i] << " " << queue[victim_index.back()]->token[i] << endl;
+            }   
+            //cout << "issue more" << endl;
+        }
+    }else{  
+        // "issue less" case
         // find victims
         for(size_t i=0; i<=queue.size()-1; ++i){
             if((*req) == queue[i]){
@@ -272,7 +290,7 @@ bool PowerBudget::splitReq(BusPacket** req, vector<BusPacket *> &queue){
             return false;
         }
 
-        // check if any victim would be assigned too many #token after split
+        // check if any victim would be assigned too many #token after shift
         bool victim_out_of_budget = false;
         for(size_t i=0; i<=victim_index.size()-1; ++i){
             for(size_t j=0; j<=NUM_CHIPS-1; ++j){
@@ -280,10 +298,10 @@ bool PowerBudget::splitReq(BusPacket** req, vector<BusPacket *> &queue){
             }
         }
         if(victim_out_of_budget){
-            // need split but fail to split
+            // need shift but fail to shift
             return false;
         }else{
-            // do split
+            // do shift
             for(size_t j=0; j<=NUM_CHIPS-1; ++j){
                 (*req)->token[j] -= loan[j]; 
             }
@@ -301,7 +319,7 @@ bool PowerBudget::splitReq(BusPacket** req, vector<BusPacket *> &queue){
            queue[victim_index.back()]->token[j] += loan[j] % victim_index.size();
            }
            */
-        //cout << "borrowed" << endl;
+        //cout << "issue less" << endl;
     }
     return true;
 }
@@ -323,11 +341,12 @@ float PowerBudget::countPriority(uint64_t* allocated_token){
     }
 
     float balance_metric = ((float) sum / NUM_CHIPS) / (float) max;
-    float balance_utilization_product = balance_metric * utilization / (chip_budget *NUM_CHIPS);
+    float balance_utilization_product = (balance_metric * utilization) / (chip_budget *NUM_CHIPS);
 
     //return max - sum / NUM_CHIPS;
-    return balance_utilization_product;
-    //return balance_metric;
+    //return balance_utilization_product;
+    return balance_utilization_product + (issuable(allocated_token)? 1:0);
+    //return balance_metric
 }
 
 uint8_t PowerBudget::getHotChips(uint64_t* allocated_token, bool* hot_chips){

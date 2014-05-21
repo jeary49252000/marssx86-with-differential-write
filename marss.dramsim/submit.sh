@@ -36,10 +36,12 @@ w320.r80.b16
 #Benchmark=( 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 473.astar.8c);
 #Benchmark=( 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c);
 #Benchmark=( parsec.freqmine.8c parsec.x264.8c parsec.vips.8c parsec.facesim.8c);
-#Benchmark=( 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c parsec.x264.8c parsec.facesim.8c);
+Benchmark=( 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c parsec.x264.8c parsec.vips.8c parsec.freqmine.8c parsec.facesim.8c);
+
 #Benchmark=( 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c);
-#Benchmark=(462.libquantum.8c 470.lbm.8c);
-Benchmark=( 410.bwaves.8c 410.bwaves.8c 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 410.bwaves.8c 462.libquantum.8c 470.lbm.8c parsec.x264.8c parsec.facesim.8c);
+#Benchmark=(parsec.x264.8c parsec.vips.8c parsec.freqmine.8c parsec.facesim.8c);
+#Benchmark=(429.mcf.8c 462.libquantum.8c 470.lbm.8c);
+#Benchmark=(429.mcf.8c);
 #Benchmark=( 437.leslie3d.8c 470.lbm.8c );
 
 #Benchmark=( 459.GemsFDTD 462.libquantum 473.astar );
@@ -54,7 +56,8 @@ do
     for S in ${Suffix4[*]};
     do
         echo $B.$S
-        qsub -q small script/$B.$S.sh
+        #qsub -q small script/$B.$S.sh
+        qsub script/$B.$S.sh
         sleep 1
     done
 done

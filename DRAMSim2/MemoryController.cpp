@@ -140,7 +140,6 @@ void MemoryController::receiveFromBus(BusPacket *bpacket)
     //add to return read data queue
 	returnTransaction.push_back(new Transaction(RETURN_DATA, bpacket->physicalAddress, bpacket->data));
 	totalReadsPerBank[SEQUENTIAL(bpacket->rank,bpacket->bank)]++;
-
 	// this delete statement saves a mindboggling amount of memory
 	delete(bpacket);
 }
@@ -276,7 +275,6 @@ void MemoryController::update()
 
 			totalTransactions++;
 			totalWritesPerBank[SEQUENTIAL(writeDataToSend[0]->rank,writeDataToSend[0]->bank)]++;
-            
             //commandQueue.WriteReqNum[writeDataToSend[0]->rank][writeDataToSend[0]->bank] --;
 
 			writeDataCountdown.erase(writeDataCountdown.begin());
@@ -907,7 +905,6 @@ bool MemoryController::addTransaction(Transaction *trans)
     {
         unsigned chan,rank,bank,row,col;
         addressMapping(trans->address,chan,rank,bank,row,col);
-
         if(trans->transactionType == DATA_READ){
             commandQueue.ReadReqNum[rank][bank] ++;
             trans->timeAdded = currentClockCycle;

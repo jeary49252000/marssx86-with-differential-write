@@ -45,7 +45,7 @@
 #include <assert.h>
 
 // scyu: NO_SUB_REQUEST
-#define NO_SUB_REQUEST 1
+#define NO_SUB_REQUEST 0
 
 using namespace DRAMSim;
 
@@ -288,7 +288,7 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
             bool foundIssuable = false;
 			unsigned startingRank = nextRank;
 			unsigned startingBank = nextBank;
-			do
+            do
 			{
 				vector<BusPacket *> &queue = getCommandQueue(nextRank, nextBank);
 				//make sure there is something in this queue first
@@ -305,25 +305,18 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                         write_count += (int) (queue[i]->busPacketType == WRITE_P);
                         activate_count += (int) (queue[i]->busPacketType == ACTIVATE);
                     }
-                    // scyu: is there really a case that write queue full?
-                    //if(WriteBurst[nextRank][nextBank]){
-                    //    cout << "write burst ["<<nextRank<<"]["<<nextBank<< "] [" << WriteReqNum[nextRank][nextBank] << "("<< activate_count << ", " <<  read_count << ", "<< write_count <<")] @cycle" << currentClockCycle << endl;
-                    //}
 
                     if(WriteBurst[nextRank][nextBank] == true){
                         if(WriteReqNum[nextRank][nextBank] > 0){ //write queue is still not empty
                             read_first = false;
                         }else{ // write queue are drained to be empty
-                            cout << "write burst end ["<<nextRank<<"]["<<nextBank<< "] [" << WriteReqNum[nextRank][nextBank] << "("<< activate_count << ", " <<  read_count << ", "<< write_count <<")] @cycle" << currentClockCycle << endl;
                             WriteBurst[nextRank][nextBank] = false;  //finish write burst mode
                             WriteBurstTotalCycle[nextRank][nextBank] += currentClockCycle - WriteBurstStartCycle[nextRank][nextBank];
-                            PRINT( " - Bursting Time (Bank " <<nextBank<<"): " << (float) WriteBurstTotalCycle[nextRank][nextBank]/currentClockCycle << " ( " << WriteBurstTotalCycle[nextRank][nextBank] << " )");
-                            cout <<  " - Bursting Time (Bank " <<nextBank<<"): " << (float) WriteBurstTotalCycle[nextRank][nextBank]/currentClockCycle << " ( " << WriteBurstTotalCycle[nextRank][nextBank] << " )" << endl;
+                            PRINT( " - Bursting Time (Rank " << nextRank << " ,Bank " << nextBank << "): " << (float) WriteBurstTotalCycle[nextRank][nextBank]/currentClockCycle << " ( " << WriteBurstTotalCycle[nextRank][nextBank] << " )");
                             read_first = true;
                         }
                     }else{
                         if(WriteReqNum[nextRank][nextBank] >= W_QUEUE_DEPTH){ // write queue full
-                            cout << "write burst start ["<<nextRank<<"]["<<nextBank<< "] [" << WriteReqNum[nextRank][nextBank] << "("<< activate_count << ", " <<  read_count << ", "<< write_count <<")] @cycle" << currentClockCycle << endl;
                             WriteBurst[nextRank][nextBank] = true;  //enter write burst mode
                             WriteBurstStartCycle[nextRank][nextBank] = currentClockCycle;
                             read_first = false;
@@ -335,6 +328,8 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
 
                     // needs to find active or not
                     bool find_activate = (bankStates[nextRank][nextBank].currentBankState != RowActive); 
+                    // round 0 for finding issuable requests
+                    // round 1 for finding un-issuable yet could be issuable after dynamic division
                     int  round = 0;
 
                     do{
@@ -397,9 +392,15 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                                     // for baseline architecture, do not iterrupt write iterations
                                     if(queue[i]->busPacketType == ACTIVATE && i<(queue.size()-1) 
                                             && queue[i+1]->busPacketType == WRITE_P && WriteInProgressed[nextRank][nextBank]){
+                                        
+                                        // not to push un-issuable packet at round 0
+                                        // not to push un-issuable but issuable by shifting packet at round 1
+                                        if((round == 0 && !rank->budget->issuable(queue[i+1]->token)) 
+                                                || (round > 0 && !rank->budget->issuableAfterShifting(queue[i+1], queue))){
+                                            continue;
+                                        }
                                         // check transaction ID
-                                        if((queue[i+1]->transID != TransInProgressed[nextRank][nextBank])
-                                                || (!rank->budget->trySplitReq(queue[i+1], queue))){
+                                        if((queue[i+1]->transID != TransInProgressed[nextRank][nextBank])){
                                             //cout << queue[i+1]->transID <<  " waiting " << TransInProgressed[nextRank][nextBank] << endl;
                                             //cout << rank->budget->dumpBudgetStatus(queue[i+1]->token) << endl;
                                             continue;
@@ -407,8 +408,13 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                                         // no need to check subReqID, since sub-requests are issued in ordered
                                     }
                                     else if(queue[i]->busPacketType == WRITE_P){
-                                        if(WriteInProgressed[nextRank][nextBank] && (queue[i]->transID != TransInProgressed[nextRank][nextBank])
-                                                || (!rank->budget->trySplitReq(queue[i], queue))){
+                                        // not to push un-issuable packet at round 0
+                                        // not to push un-issuable but issuable by shifting packet at round 1
+                                        if((round == 0 && !rank->budget->issuable(queue[i]->token)) 
+                                                || (round > 0 && !rank->budget->issuableAfterShifting(queue[i], queue))){
+                                            continue;
+                                        }
+                                        if(WriteInProgressed[nextRank][nextBank] && (queue[i]->transID != TransInProgressed[nextRank][nextBank])){
                                             continue;
                                         }
                                     }
@@ -418,12 +424,20 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                                     // check sub-requests is issuable or not
                                     Rank* rank = _ranks->at(nextRank);
                                     if(queue[i]->busPacketType == ACTIVATE && i<(queue.size()-1) && queue[i+1]->busPacketType == WRITE_P){ 
-                                        if(!rank->budget->trySplitReq(queue[i+1], queue))
+                                        // not to push un-issuable packet at round 0
+                                        // not to push un-issuable but issuable by shifting packet at round 1
+                                        if((round == 0 && !rank->budget->issuable(queue[i+1]->token)) 
+                                                || (round > 0 && !rank->budget->issuableAfterShifting(queue[i+1], queue))){
                                             continue;
+                                        }
                                     }
                                     else if(queue[i]->busPacketType == WRITE_P){
-                                        if(!rank->budget->trySplitReq(queue[i], queue))
+                                        // not to push un-issuable packet at round 0
+                                        // not to push un-issuable but issuable by shifting packet at round 1
+                                        if((round == 0 && !rank->budget->issuable(queue[i]->token)) 
+                                                || (round > 0 && !rank->budget->issuableAfterShifting(queue[i], queue))){
                                             continue;
+                                        }
                                     }
                                     
                                 }
@@ -490,7 +504,7 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                     float score = 0.0f;
                     float max_score = 0.0f;
                     for(size_t i=0; i<=reordering_buffer.size()-1; ++i){
-                        if(reordering_buffer[i]->busPacketType == WRITE_P && rank->budget->trySplitReq(reordering_buffer[i], queue)){
+                        if(reordering_buffer[i]->busPacketType == WRITE_P && rank->budget->issuableAfterShifting(reordering_buffer[i], queue)){
                             score = rank->budget->countPriority(reordering_buffer[i]->token);
                             if(score > max_score){
                                 max_score = score;
@@ -510,8 +524,8 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                             if(reordering_buffer[i]->busPacketType == ACTIVATE){
                                 if(reordering_buffer_index[i]+1 < queue.size() && queue[reordering_buffer_index[i]+1]->busPacketType == WRITE_P 
                                         //&& rank->budget->issuable(queue[reordering_buffer_index[i]+1]->token)){
-                                        //&& isIssuable(queue[reordering_buffer_index[i]+1]) && rank->budget->trySplitReq(queue[reordering_buffer_index[i]+1], queue)){
-                                        && rank->budget->trySplitReq(queue[reordering_buffer_index[i]+1], queue)){
+                                        //&& isIssuable(queue[reordering_buffer_index[i]+1]) && rank->budget->issuableAfterShifting(queue[reordering_buffer_index[i]+1], queue)){
+                                        && rank->budget->issuableAfterShifting(queue[reordering_buffer_index[i]+1], queue)){
                                     score = rank->budget->countPriority(queue[reordering_buffer_index[i]+1]->token);
                                     if(score > max_score){
                                         max_score = score;
@@ -543,9 +557,9 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                 }else if((*busPacket)->busPacketType == WRITE_P && BUDGET_AWARE_SCHEDULE){
                     Rank* r = _ranks->at((*busPacket)->rank);
                     // check could be split or not
-                    if(r->budget->trySplitReq(*busPacket, queue)){
+                    if(r->budget->issuableAfterShifting(*busPacket, queue)){
                         // split it    
-                        r->budget->splitReq(busPacket, queue);
+                        r->budget->shiftSubReq(busPacket, queue);
                     }else if(!r->budget->issuable((*busPacket)->token)){
                         // if could not be split and not issuable => not really found issuable!
                         busPacket = NULL;
