@@ -402,11 +402,11 @@ void MemoryController::update()
 				if (poppedBusPacket->busPacketType == WRITE_P) 
 				{
                     int iter = poppedBusPacket->iterations;
-					//bankStates[rank][bank].nextActivate = max(currentClockCycle + WRITE_AUTOPRE_DELAY,
+                    //bankStates[rank][bank].nextActivate = max(currentClockCycle + WRITE_AUTOPRE_DELAY,
 					//		bankStates[rank][bank].nextActivate);
 					bankStates[rank][bank].nextActivate = max(currentClockCycle + (WL+BL/2+iter*tWR+tRP),
 							bankStates[rank][bank].nextActivate);
-					bankStates[rank][bank].lastCommand = WRITE_P;
+                    bankStates[rank][bank].lastCommand = WRITE_P;
 					
                     //bankStates[rank][bank].stateChangeCountdown = WRITE_TO_PRE_DELAY;
 					bankStates[rank][bank].stateChangeCountdown = (WL+BL/2+ iter*tWR);
@@ -466,11 +466,10 @@ void MemoryController::update()
                     bankStates[rank][bank].nextWrite = bankStates[rank][bank].nextActivate;
                 }
 
+                //scyu: charge power tokens
                 if(POWER_BUDGETING){
-                    //scyu
                     Rank* r = ranks->at(rank);
                     r->budget->consume(poppedBusPacket->token, bank, bankStates[rank][bank].nextWrite);
-                    //cout << "balance:\t" << r->budget->dumpBalanceStatus() << endl;
                 }
                 break;
             case ACTIVATE:
@@ -1081,7 +1080,10 @@ void MemoryController::printStats(bool finalStats)
         for (size_t j=0;j<NUM_BANKS;j++)
         {
             PRINT( "        -Bandwidth / Latency  (Bank " <<j<<"): " <<bandwidth[SEQUENTIAL(r,j)] << " GB/s\t\t" <<averageLatency[SEQUENTIAL(r,j)] << " ns");
+            // scyu: dumpt write bursting info
+            PRINT( "        -Bursting Time (Bank " << j << "): " << (float) commandQueue.WriteBurstTotalCycle[r][j]/commandQueue.currentClockCycle << "\t\t( " << commandQueue.WriteBurstTotalCycle[r][j] << " )");
         }
+    
 
         // factor of 1000 at the end is to account for the fact that totalEnergy is accumulated in mJ since IDD values are given in mA
         backgroundPower[r] = ((double)backgroundEnergy[r] / (double)(cyclesElapsed)) * Vdd / 1000.0;

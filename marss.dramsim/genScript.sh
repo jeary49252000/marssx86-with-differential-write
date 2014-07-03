@@ -5,18 +5,20 @@
 #Benchmark=( 473.astar 437.leslie3d );
 #Benchmark=( 410.bwaves 434.zeusmp 437.leslie3d 470.lbm 473.astar );
 #Benchmark=( 410.bwaves 429.mcf 433.milc 434.zeusmp 436.cactusADM 437.leslie3d 450.soplex 459.GemsFDTD 462.libquantum 470.lbm 473.astar stream mummer);
-Benchmark=( 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 473.astar.8c parsec.freqmine.8c parsec.x264.8c parsec.vips.8c parsec.facesim.8c);
+Benchmark=( 410.bwaves.8c 429.mcf.8c 433.milc.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 459.gems.8c parsec.freqmine.8c parsec.x264.8c parsec.vips.8c parsec.facesim.8c 433.milc.8c.180);
+#Benchmark=( 433.milc.8c.60 433.milc.8c.120 433.milc.8c.180 );
 
 abs_path=/home/r01/scyu/diffWrite/Wonderland
 
 #wt=( w80 w160 w320 )
 wt=( w160 w320 w640 w1280)
 #rd=( r40 r80 r160 )
-rd=(r80)
-bk=( b8 b16 b32 )
-#bk=( b1 b2 )
+rd=(r80 r160)
+#bk=( b8 b16 b32 )
+bk=(b16)
 
-cp=( c4 c8 c16)
+#cp=(c4 c8 c16)
+cp=(c8)
 
 index=0
 for i in ${wt[*]};
@@ -98,9 +100,11 @@ unlink '$IMAGE_DIRECTOR''$m'.'$i'.'$j'.'$k'.'$l'.qcow; ' > script/$m.$i.$j.$k.$l
 # -dramsim-system-ini-file ini/System/budget_schedule.ini
 # simconfig script
 #TYPE='default'
+#TYPE='fwc'
 #TYPE='budget'
 TYPE='budget_schedule'
-ATTR='scheme6.r2.col64.sub.dynamic'
+#ATTR='scheme6.r2.col64.sub.dynamic.issuemore'
+ATTR='scheme6.r2.col64.shift16.sub.dynamic'
 echo '-corefreq 4000000000
 -machine private_L3
 -stopinsns 1501000000

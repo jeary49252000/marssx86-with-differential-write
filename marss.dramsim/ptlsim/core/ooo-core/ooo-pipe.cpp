@@ -2101,7 +2101,7 @@ int ReorderBufferEntry::commit() {
                     sim_cycle, false, uop.rip.rip, uop.uuid,
                     Memory::MEMORY_OP_WRITE);
             request->set_coreSignal(&core.dcache_signal);
-#if 1 
+#if 1
             // scyu: add differential write information  
             // DRAM and LLC line size (in byte)
             // size_in_map: (#elements to store, dramsim_transaction_size/8)
@@ -2148,8 +2148,9 @@ int ReorderBufferEntry::commit() {
                 //core.memoryHierarchy->insert_data_to_map(floor(lsq->physaddr << 3, 64), curr_data);
 #else
                 for(size_t i=0; i<=(LLC_SIZE>>3)-1; ++i){
-                    srand(time(NULL));
-                    prev_data[i] = rand();
+                    //srand(time(NULL));
+                    //prev_data[i] = rand();
+                    prev_data[i] = 0;
                 }
 #endif
                 core.memoryHierarchy->insert_data_to_map(aligned_physaddr, prev_data, size_in_map);

@@ -87,7 +87,9 @@ extern unsigned SIZE_ROW;
 #define SUB_REQUEST_COUNT 2
 extern bool POWER_BUDGETING; 
 extern bool BUDGET_AWARE_SCHEDULE; 
+extern bool FLEXIBLE_WRITE_CONFIG;
 extern unsigned POWER_BUDGET_PER_CHIP;
+
 
 // jksdy
 extern bool VARIABLE_WRITE_LATENCY_ENABLE;

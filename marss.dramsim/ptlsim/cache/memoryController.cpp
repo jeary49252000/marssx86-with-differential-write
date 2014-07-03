@@ -286,6 +286,7 @@ bool MemoryController::handle_interconnect_cb(void *arg)
         // count the different token when success
         if(!failedToCountDifference){
             //cout << "@" << physicalAddress << endl;
+            W64 total_set=0, total_reset=0;    
             for(size_t i=0; i<=size_in_map-1; ++i){
                 //cout << "Prev Data: " << std::bitset<64>(prev_data[i]) << " [" << std::hex << prev_data[i] << "]"<< endl;
                 //cout << "New  Data: " << std::bitset<64>(memRequest->get_data_at(i)) << " [" << std::hex << memRequest->get_data_at(i) << "]"<< endl;
@@ -303,16 +304,19 @@ bool MemoryController::handle_interconnect_cb(void *arg)
                     set   += 0x1 & diff & ~prev_data[i]; // the original data of this modified bit is 0: set  
                 }
                 
-                // update statistical infomation
-                totalBitSetCount   += set;
-                totalBitResetCount += reset;
-                histBitSet[set]++;
-                histBitReset[reset]++;
-                if(set == 0 && reset == 0) silientStoreCount++;
-                // FIXME: scyu
-                histBitChanged[set+reset]++;
+                total_set += set;
+                total_reset += reset;
+
                 distBitChangedPerChip[i%CHIP_NUM] += (set+reset);
-            }
+            } 
+            // update statistical infomation
+            totalBitSetCount   += total_set;
+            totalBitResetCount += total_reset;
+            histBitSet[total_set]++;
+            histBitReset[total_reset]++;
+            if(total_set == 0 && total_reset == 0) silientStoreCount++;
+            histBitChanged[total_set+total_reset]++;
+
             //cout << endl;
         }
 
@@ -326,11 +330,11 @@ bool MemoryController::handle_interconnect_cb(void *arg)
      * will be modified. Therefore, data writebacks will only happen on an
      * MEMORY_OP_UPDATE operation when a dirty line is evicted from the cache. 
      */
-    
+
     bool isWrite = memRequest->get_type() == MEMORY_OP_UPDATE;
     // scyu: add transaction with differential information
     bool accepted = mem->addTransaction(isWrite, physicalAddress, (isWrite)? diff_mask:NULL);
-    
+
     if(diff_mask){
         free(diff_mask);
         diff_mask = NULL;
@@ -375,7 +379,7 @@ void MemoryController::printDifferentialWriteInfo()
     for(int i=0; i<=(LLC_SIZE<<3)-1; ++i){
         sb << ((histBitChanged.count(i) > 0)? histBitChanged[i] : 0) << ", "; 
     }
-    
+
     sb << endl;
 
     // dump distribution

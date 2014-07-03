@@ -4,7 +4,10 @@
 using namespace DRAMSim;
 
 #define DEBUG 0
+#define MAX_BITS_TO_SHIFT 16
 #define DYNAMIC_DIVISION 1
+#define ISSUE_LESS 1
+#define ISSUE_MORE 1
 #define SHARED_BUDGET 0
 #define BYTE_INTERLEAVING 0
 
@@ -29,6 +32,9 @@ PowerBudget::PowerBudget(uint16_t budget){
     if(BUDGET_AWARE_SCHEDULE){
         cout << "POWER BUDGET AWARE SCHEDULING ON" << endl;
     }
+    if(FLEXIBLE_WRITE_CONFIG){
+        cout << "FLEXIBLE_WRITE_CONFIGURATION ON" << endl;
+    }
 #if SHARED_BUDGET
     cout << "SHARED POWER BUDGET CONFIGURATION" << endl;
 #endif
@@ -37,6 +43,14 @@ PowerBudget::PowerBudget(uint16_t budget){
     cout << "DYNAMIC CDIVISION" << endl;
 #else
     cout << "STATIC DIVISION" << endl;
+#endif
+
+#if ISSUE_MORE
+    cout << "ISSUE MORE" << endl;
+#endif
+
+#if ISSUE_LESS
+    cout << "ISSUE LESS" << endl;
 #endif
 }
 
@@ -110,6 +124,38 @@ bool PowerBudget::issuable(uint64_t* allocated_token){
     }
 #endif
     return !out_of_token;
+}
+
+bool PowerBudget::issuableFWC(uint64_t* allocated_token, bool* need_more_iter){
+    uint64_t two_iter[NUM_CHIPS]; 
+    for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+        two_iter[i] = allocated_token[i]/2; // assume equally distributed into 2 iterations
+    }
+    //return (issuable(allocated_token));
+    if(issuable(allocated_token)){
+        *need_more_iter = false;
+        return true;
+    }else if(issuable(two_iter)){
+        *need_more_iter = true;
+        cout << "issuable via two_iter" << endl;
+        return true;
+    }
+    return false;
+}
+ 
+void PowerBudget::doFWC(uint64_t* allocated_token, bool* need_more_iter){
+    uint64_t two_iter[NUM_CHIPS]; 
+    for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+        two_iter[i] = allocated_token[i]/2; // assume equally distributed into 2 iterations
+    }
+    if(issuable(allocated_token)){
+        *need_more_iter = false;
+    }else if(issuable(two_iter)){
+        *need_more_iter = true;
+        for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+            allocated_token[i] = two_iter[i]; 
+        }
+    }
 }
 
 void PowerBudget::reclaimLine(uint64_t* allocated_token){
@@ -203,29 +249,21 @@ void PowerBudget::mappingFunction(uint64_t* line, uint64_t allocated_token[]){
 }
 
 bool PowerBudget::issuableAfterShifting(BusPacket* req, vector<BusPacket *> &queue){
-    vector<size_t> victim_index;
-
-    // find victims
-    for(size_t i=0; i<=queue.size()-1; ++i){
-        if(req == queue[i]){
-            // do nothing here
-        }else if(queue[i]->busPacketType == WRITE_P && queue[i]->transID == req->transID){
-            victim_index.push_back(i); 
-        }
-    }
-    // return true if there is any victim or issuable w/o shifting
+    
 #if DYNAMIC_DIVISION 
-    return ((victim_index.size() >= 1) || issuable(req->token));
+    return (issuable(req->token) || shiftSubReq(&req, queue, false));
 #else
     return issuable(req->token);
 #endif
 }
 
-bool PowerBudget::shiftSubReq(BusPacket** req, vector<BusPacket *> &queue){
+// do_shift = false: try issuable after shifting or not, not do the shifting immediately  
+bool PowerBudget::shiftSubReq(BusPacket** req, vector<BusPacket *> &queue, bool do_shift){
     vector<size_t> victim_index;
     uint64_t loan[NUM_CHIPS];
     bool need_shift = false;
     const static uint8_t lower_bound_to_issue_any_other_request = 24;
+    //const static uint8_t lower_bound_to_issue_any_other_request = 48;
 
     // determine whether there is a need to shift
     for(size_t i=0; i<=NUM_CHIPS-1; ++i){
@@ -260,17 +298,18 @@ bool PowerBudget::shiftSubReq(BusPacket** req, vector<BusPacket *> &queue){
             }
             loan[i] = (token[i] > (*req)->token[i])? token[i] - (*req)->token[i] : 0;
             loan[i] = (loan[i] > queue[victim_index.back()]->token[i])? queue[victim_index.back()]->token[i] : loan[i];
-#if DYNAMIC_DIVISION
+            // check upper bound
+            loan[i] = (loan[i] > MAX_BITS_TO_SHIFT)? MAX_BITS_TO_SHIFT : loan[i];
+#if DYNAMIC_DIVISION && ISSUE_MORE 
             could_shift |= loan[i] > 0;
 #endif
         }
-        if(could_shift){
+        if(could_shift && do_shift){ 
+            // do shifting
             for(size_t i=0; i<=NUM_CHIPS-1; ++i){
                 //loan[i] = loan[i]/2; // tunable 
-                //cout << (*req)->token[i] << " " << queue[victim_index.back()]->token[i] << endl;
                 (*req)->token[i] += loan[i];
                 queue[victim_index.back()]->token[i] -= loan[i];
-                //cout << (*req)->token[i] << " " << queue[victim_index.back()]->token[i] << endl;
             }   
             //cout << "issue more" << endl;
         }
@@ -284,6 +323,10 @@ bool PowerBudget::shiftSubReq(BusPacket** req, vector<BusPacket *> &queue){
                 victim_index.push_back(i); 
             }
         }
+
+#if DYNAMIC_DIVISION && !ISSUE_LESS
+    return false;
+#endif
 
         if(victim_index.size() == 0){
             // fail to find any victim
@@ -300,7 +343,13 @@ bool PowerBudget::shiftSubReq(BusPacket** req, vector<BusPacket *> &queue){
         if(victim_out_of_budget){
             // need shift but fail to shift
             return false;
-        }else{
+        }else if(do_shift){
+                // check upper bound
+            for(size_t j=0; j<=NUM_CHIPS-1; ++j){
+                if(loan[j] > MAX_BITS_TO_SHIFT){
+                    return false;
+                }
+            }
             // do shift
             for(size_t j=0; j<=NUM_CHIPS-1; ++j){
                 (*req)->token[j] -= loan[j]; 
@@ -346,6 +395,7 @@ float PowerBudget::countPriority(uint64_t* allocated_token){
     //return max - sum / NUM_CHIPS;
     //return balance_utilization_product;
     return balance_utilization_product + (issuable(allocated_token)? 1:0);
+    //return 1;
     //return balance_metric
 }
 

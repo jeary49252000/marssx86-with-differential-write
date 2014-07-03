@@ -211,7 +211,7 @@ void Rank::receiveFromBus(BusPacket *packet)
 		break;
 	case ACTIVATE:
 		//make sure activate is allowed
-		if (bankStates[packet->bank].currentBankState != Idle ||
+        if (bankStates[packet->bank].currentBankState != Idle ||
 		        currentClockCycle < bankStates[packet->bank].nextActivate)
 		{
 			ERROR("== Error - Rank " << id << " received an ACT when not allowed");
