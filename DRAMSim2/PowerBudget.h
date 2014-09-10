@@ -31,7 +31,9 @@ public:
     void setBudget(uint16_t budget);
     bool issuable(uint64_t* line);
     bool issuableAfterShifting(BusPacket* req, vector<BusPacket *> &victims);
-    bool shiftSubReq(BusPacket** req, vector<BusPacket *> &victims);
+    bool issuableFWC(uint64_t* allocated_token, bool* need_more_iter);
+    void doFWC(uint64_t* allocated_token, bool* need_more_iter);
+    bool shiftSubReq(BusPacket** req, vector<BusPacket *> &queue, bool do_shift);
     bool consume(uint64_t* line, size_t bank_no, uint64_t completed_time);
     void reclaimLine(uint64_t* line);
     void reclaim(uint64_t curr_time);

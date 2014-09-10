@@ -329,7 +329,7 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                     // needs to find active or not
                     bool find_activate = (bankStates[nextRank][nextBank].currentBankState != RowActive); 
                     // round 0 for finding issuable requests
-                    // round 1 for finding un-issuable yet could be issuable after dynamic division
+                    // round 1 for finding un-issuable but could be issuable after dynamic division
                     int  round = 0;
 
                     do{
@@ -377,7 +377,11 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                                     if(queue[i]->busPacketType == ACTIVATE && i<(queue.size()-1) 
                                             && queue[i+1]->busPacketType == WRITE_P && WriteInProgressed[nextRank][nextBank]){
                                         // check transaction ID
-                                        if(queue[i+1]->transID != TransInProgressed[nextRank][nextBank]){
+                                        // XXX
+                                        //if(queue[i+1]->transID != TransInProgressed[nextRank][nextBank]){
+                                         Rank* rank = _ranks->at(nextRank);
+                                        if(queue[i+1]->transID != TransInProgressed[nextRank][nextBank] 
+                                                || (POWER_BUDGETING && !rank->budget->issuable(queue[i+1]->token))){
                                             //cout << queue[i+1]->transID <<  " waiting " << TransInProgressed[nextRank][nextBank] << endl;
                                             continue;
                                         }
@@ -462,7 +466,9 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                         if(!read_first && WriteInProgressed[nextRank][nextBank] && BUDGET_AWARE_SCHEDULE)
                             break;
 #endif
-
+                        // XXX
+                        if(!read_first && WriteInProgressed[nextRank][nextBank] && BUDGET_AWARE_SCHEDULE)
+                            continue;
                         read_first = !read_first;
                     }while(!foundIssuable && (++round) < 2);
                 }
@@ -545,6 +551,24 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                 *busPacket = queue[reordering_buffer_index[request_to_be_issued]];
 
                 if((*busPacket)->busPacketType == WRITE_P && !BUDGET_AWARE_SCHEDULE){
+                    Rank* r = _ranks->at((*busPacket)->rank);
+                    bool need_more_iter = false;
+                    if(POWER_BUDGETING && !FLEXIBLE_WRITE_CONFIG && !r->budget->issuable((*busPacket)->token)){
+                        // not issuable 
+                        busPacket = NULL;
+                        return false;
+                    }
+                    if(POWER_BUDGETING && FLEXIBLE_WRITE_CONFIG && !r->budget->issuableFWC((*busPacket)->token, &need_more_iter)){
+                        // not issuable 
+                        busPacket = NULL;
+                        return false;
+                    }
+                    if(FLEXIBLE_WRITE_CONFIG){
+                        //scyu: issuable for write configuration with more divisions
+                        bool need_more_iter = false;
+                        r->budget->doFWC((*busPacket)->token, &need_more_iter);
+                        (*busPacket)->iterations = (need_more_iter)? 2 : 1;
+                    }
                     if((*busPacket)->subReqID == SUB_REQUEST_COUNT-1){
                         // write transaction end
                         WriteInProgressed[(*busPacket)->rank][(*busPacket)->bank] = false;
@@ -556,29 +580,32 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                     //cout << (*busPacket)->transID << " " << (*busPacket)->subReqID << endl;
                 }else if((*busPacket)->busPacketType == WRITE_P && BUDGET_AWARE_SCHEDULE){
                     Rank* r = _ranks->at((*busPacket)->rank);
-                    // check could be split or not
+                    // check could be shifted or not
                     if(r->budget->issuableAfterShifting(*busPacket, queue)){
-                        // split it    
-                        r->budget->shiftSubReq(busPacket, queue);
-                    }else if(!r->budget->issuable((*busPacket)->token)){
-                        // if could not be split and not issuable => not really found issuable!
+                        // shift it    
+                        if(!r->budget->shiftSubReq(busPacket, queue, true) && !r->budget->issuable((*busPacket)->token)){
+                            // failed to shift and is not issuable => no issuable packet
+                            busPacket = NULL;
+                            return false;
+                        }
+                    }else{
+                        // if it can not be shifted and is not issuable => no issuable packet!
                         busPacket = NULL;
-                        //cout << "non-issuable" << endl;
                         return false;
                     }
 // no sub-request, only dynamic division
 #if NO_SUB_REQUEST
-                    cout << "rank " << (*busPacket)->rank << " bank " << (*busPacket)->bank << endl;
-                    cout << "issue " << (*busPacket)->transID << "-" << (*busPacket)->subReqID << endl; 
+                    //cout << "rank " << (*busPacket)->rank << " bank " << (*busPacket)->bank << endl;
+                    //cout << "issue " << (*busPacket)->transID << "-" << (*busPacket)->subReqID << endl; 
                     if((*busPacket)->subReqID == SUB_REQUEST_COUNT-1){
                         // write transaction end
                         WriteInProgressed[(*busPacket)->rank][(*busPacket)->bank] = false;
-                        cout << "tran " << TransInProgressed[(*busPacket)->rank][(*busPacket)->bank] << " end" << endl;
+                        //cout << "tran " << TransInProgressed[(*busPacket)->rank][(*busPacket)->bank] << " end" << endl;
                     }else if((*busPacket)->subReqID == 0){
                         // write transaction start
                         WriteInProgressed[(*busPacket)->rank][(*busPacket)->bank] = true;
                         TransInProgressed[(*busPacket)->rank][(*busPacket)->bank] = (*busPacket)->transID;
-                        cout << "tran " << (*busPacket)->transID << " start" << endl;
+                        //cout << "tran " << (*busPacket)->transID << " start" << endl;
                     }
 #endif
                 }
@@ -586,6 +613,19 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                 //    Rank* r = _ranks->at(reordering_buffer[request_to_be_issued]->rank);
                 //    cout << r->budget->dumpRequestStatus(queue[reordering_buffer_index[request_to_be_issued]]->token) << endl;
                 //}
+#if 0
+                // scyu: skip division w/ zero modified bits
+                bool zero_modified_bits = true;
+                for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+                    if((*busPacket)->token[i] != 0){
+                        zero_modified_bits &= false;
+                    }
+                }
+                if(!POWER_BUDGETING){
+                    zero_modified_bits = false;
+                }
+                (*busPacket)->iterations = (zero_modified_bits)? 0 : (*busPacket)->iterations;
+#endif
                 queue.erase(queue.begin()+reordering_buffer_index[request_to_be_issued]);
             }
 
@@ -958,8 +998,14 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
                         //  issueable if consumed power < power budget
                         Rank* r = _ranks->at(busPacket->rank);
                         r->budget->reclaim(currentClockCycle);
-                        // for our mechanism, not check issuable here since there is chance to split it
-                        return (BUDGET_AWARE_SCHEDULE) || r->budget->issuable(busPacket->token); 
+                        if(!FLEXIBLE_WRITE_CONFIG){
+                            // for our mechanism, not check issuable here since there is chance to split it
+                            return (BUDGET_AWARE_SCHEDULE) || r->budget->issuable(busPacket->token); 
+                        }else{
+                            // for flexible write configuration
+                            bool need_more_iter;
+                            return r->budget->issuableFWC(busPacket->token, &need_more_iter);
+                        }
                     }else{
                         return true;
                     }
