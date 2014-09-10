@@ -63,6 +63,12 @@ public:
     // scyu: add differential write information
     vector<Rank *>* getRank(){return ranks;}
 
+	// laisky: waiting for the power budget information
+	uint64_t waitingCyclesOne;
+	uint64_t waitingCyclesTwo;
+	uint64_t max_waitingCyclesOne;
+	uint64_t max_waitingCyclesTwo;
+
 	bool addTransaction(Transaction *trans);
 	bool WillAcceptTransaction();
 	bool WillAcceptTransaction(unsigned rank, unsigned bank, bool isWrite);

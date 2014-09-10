@@ -5,17 +5,28 @@
 #Benchmark=( 473.astar 437.leslie3d );
 #Benchmark=( 410.bwaves 434.zeusmp 437.leslie3d 470.lbm 473.astar );
 #Benchmark=( 410.bwaves 429.mcf 433.milc 434.zeusmp 436.cactusADM 437.leslie3d 450.soplex 459.GemsFDTD 462.libquantum 470.lbm 473.astar stream mummer);
-Benchmark=( 410.bwaves.8c 429.mcf.8c 433.milc.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 459.gems.8c parsec.freqmine.8c parsec.x264.8c parsec.vips.8c parsec.facesim.8c 433.milc.8c.180);
+#Benchmark=( 410.bwaves.8c 429.mcf.8c 433.milc.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 459.gems.8c parsec.freqmine.8c parsec.x264.8c parsec.vips.8c parsec.facesim.8c 433.milc.8c.180);
+
+Benchmark=( 429.mcf.8c 433.milc.8c.180 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c parsec.x264.8c parsec.facesim.8c );
+#Benchmark=( 429.mcf.8c 433.milc.8c.180 470.lbm.8c parsec.x264.8c parsec.facesim.8c );
+#Benchmark=( 462.libquantum.8c parsec.facesim.8c );
+#Benchmark=( 462.libquantum.8c );
+#Benchmark=( 462.libquantum.8c 470.lbm.8c parsec.x264.8c );
+#Benchmark=( parsec.x264.8c );
+#Benchmark=( 433.milc.8c.180 470.lbm.8c parsec.x264.8c parsec.facesim.8c );
+#Benchmark=( 462.libquantum.8c 470.lbm.8c parsec.x264.8c );
+#Benchmark=( 470.lbm.8c );
+#Benchmark=( 437.leslie3d.8c parsec.x264.8c );
 #Benchmark=( 433.milc.8c.60 433.milc.8c.120 433.milc.8c.180 );
 
-abs_path=/home/r01/scyu/diffWrite/Wonderland
+abs_path=/home/bachelor/laisky/PCM_rerun/marssx86-with-differential-write/
 
 #wt=( w80 w160 w320 )
 wt=( w160 w320 w640 w1280)
 #rd=( r40 r80 r160 )
 rd=(r80 r160)
-#bk=( b8 b16 b32 )
-bk=(b16)
+bk=( b8 b16 b32 )
+#bk=(b16)
 
 #cp=(c4 c8 c16)
 cp=(c8)
@@ -41,8 +52,8 @@ done
 #Wlatency=( 1000c );
 
 MARSS_DIRECTOR=`pwd`;
-IMAGE_DIRECTOR="/tmp3/scyu_marss/";
-IMAGE_SOURCE_DIRECTOR="/tmp3/scyu_marss/";
+IMAGE_DIRECTOR="/tmp3/laisky/";
+IMAGE_SOURCE_DIRECTOR="/tmp3/laisky/";
 #IMAGE_SOURCE_DIRECTOR="/home/phd/liurs/Image/8g/";
 
 # check directory
@@ -104,7 +115,18 @@ unlink '$IMAGE_DIRECTOR''$m'.'$i'.'$j'.'$k'.'$l'.qcow; ' > script/$m.$i.$j.$k.$l
 #TYPE='budget'
 TYPE='budget_schedule'
 #ATTR='scheme6.r2.col64.sub.dynamic.issuemore'
-ATTR='scheme6.r2.col64.shift16.sub.dynamic'
+#ATTR='r2.sub.dynamic.WTcollected'
+#ATTR='r2.sub.dynamic.WTcollected2'
+#ATTR='r2.nosub.dynamic'
+#ATTR='r2.nosub.dynamic.WTcollected2'
+ATTR='r2.nosub.dynamic.WTcollected3'
+#ATTR='r2.nosub.dynamic.WTcollected'
+#ATTR='r2.nosub.static'
+#ATTR='r2.nosub.static.WTcollected'
+#ATTR='r2.nosub.static.WTcollected2'
+#ATTR='r2.sub.static'
+#ATTR='r2.sub.static.WTcollected'
+#ATTR='r2.sub.static.WTcollected2'
 echo '-corefreq 4000000000
 -machine private_L3
 -stopinsns 1501000000

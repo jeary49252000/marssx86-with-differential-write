@@ -1,5 +1,5 @@
 # Automatically generated config file - do not modify
-SRC_PATH=/home/r01/scyu/diffWrite/Wonderland/marss.dramsim/qemu/roms/vgabios
+SRC_PATH=/home/bachelor/laisky/PCM_rerun/marssx86-with-differential-write/marss.dramsim/qemu/roms/vgabios
 CC=g++
 BCC=bcc
 CPP=cpp

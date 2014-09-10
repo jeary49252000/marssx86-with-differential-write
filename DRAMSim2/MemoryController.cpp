@@ -116,6 +116,11 @@ MemoryController::MemoryController(MemorySystem *parent, CSVWriter &csvOut_, ost
 
     // scyu: for sub-requests, add transaction ID information
     transactionID = 0;
+	// laisky: waiting for the power budget information
+	waitingCyclesOne = 0;
+	waitingCyclesTwo = 0;
+	max_waitingCyclesOne = 0;
+	max_waitingCyclesTwo = 0;
 
     detailSim = true;
     writeBarrier = false;
@@ -410,6 +415,18 @@ void MemoryController::update()
 					
                     //bankStates[rank][bank].stateChangeCountdown = WRITE_TO_PRE_DELAY;
 					bankStates[rank][bank].stateChangeCountdown = (WL+BL/2+ iter*tWR);
+
+					// laisky: waiting powerbudget information
+					if (poppedBusPacket->subReqID == 0) {
+						if (poppedBusPacket->blockCycles > max_waitingCyclesOne) 
+							max_waitingCyclesOne = poppedBusPacket->blockCycles;
+						waitingCyclesOne = waitingCyclesOne + poppedBusPacket->blockCycles;
+					}
+					else if (poppedBusPacket->subReqID == SUB_REQUEST_COUNT - 1) {
+						if (poppedBusPacket->blockCycles > max_waitingCyclesTwo)
+							max_waitingCyclesTwo = poppedBusPacket->blockCycles;
+						waitingCyclesTwo = waitingCyclesTwo + poppedBusPacket->blockCycles;
+					}
 
 				}
 				else if (poppedBusPacket->busPacketType == WRITE)
@@ -1017,6 +1034,21 @@ void MemoryController::getDramStats(string &sb)
     sb += "current total refresh latency : "+     NumberToString(totalRefreshLatency);
     sb += "\n";
     sb += "current average refresh latency : "+   NumberToString(double(totalRefreshLatency)/totalRefreshCount );
+    
+	// laisky: 
+	sb += "\n";
+    sb += "current total waiting cycles [1] : "+       NumberToString(waitingCyclesOne);
+    sb += "\n";
+    sb += "current average waiting cycles [1] : "+     NumberToString(double(waitingCyclesOne)/totalWriteCount);
+    sb += "\n";
+    sb += "current max waiting cycles [1]: "+   NumberToString(max_waitingCyclesOne);
+
+    sb += "\n";
+    sb += "current total waiting cycles [2] : "+       NumberToString(waitingCyclesTwo);
+    sb += "\n";
+    sb += "current average waiting cycles [2] : "+     NumberToString(double(waitingCyclesTwo)/totalWriteCount);
+    sb += "\n";
+    sb += "current max waiting cycles [2]: "+   NumberToString(max_waitingCyclesTwo);
 
 }
 

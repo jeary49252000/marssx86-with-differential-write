@@ -68,7 +68,10 @@ public:
     // scyu: add differential write information
     unsigned subReqID;
     uint64_t transID;
-    uint64_t token[NUM_CHIPS]; 
+    uint64_t token[NUM_CHIPS];
+
+	// laisky: waiting for power budget cycles
+	uint64_t blockCycles;
 
 	//Functions
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, uint64_t time);
