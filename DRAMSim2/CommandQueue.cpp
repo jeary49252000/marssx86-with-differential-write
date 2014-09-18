@@ -45,7 +45,7 @@
 #include <assert.h>
 
 // scyu: NO_SUB_REQUEST
-#define NO_SUB_REQUEST 1 
+#define NO_SUB_REQUEST 0 
 
 using namespace DRAMSim;
 
@@ -640,8 +640,11 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
 			//if we couldn't find anything to send, return false
 			if (!foundIssuable){
 				if (POWER_BUDGETING) {
-					// laisky: nothing found issuable increase all the counters
-					// iterate through all the request packets
+					// laisky
+					// TODO: Change to count by PCM bank self
+					// A counter in the Bank, increase it by cycle
+					// 1. First check if target bank queue is not empty
+					// 2. For not empty case, increase the counter in the bank
 					unsigned startingRank = 0;
 					unsigned startingBank = 0;
 					unsigned rankNum = 0;
@@ -649,54 +652,11 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
 					do
 					{
 						vector<BusPacket *> &queue = getCommandQueue(rankNum, bankNum);
-						for (size_t i = 0; i < queue.size(); i++) {
-							if ( queue[i]->busPacketType == WRITE_P ) {
-								Rank* rank = _ranks->at(rankNum);
-								if (queue[i]->subReqID == 0) {
-									if (!rank->budget->issuableAfterShifting(queue[i], queue)) {
-										queue[i]->blockCycles = queue[i]->blockCycles + 1;
-									}
-#if NO_SUB_REQUEST
-									else if (WriteInProgressed[queue[i]->rank][queue[i]->bank] &&
-												(TransInProgressed[queue[i]->rank][queue[i]->bank] != queue[i]->transID)) {
-										queue[i]->blockCycles = queue[i]->blockCycles + 1;
-									}
-#endif
-								}
-								else if (queue[i]->subReqID == SUB_REQUEST_COUNT - 1) {
-								/*
-									if (WriteInProgressed[queue[i]->rank][queue[i]->bank] && 
-											(TransInProgressed[queue[i]->rank][queue[i]->bank] == queue[i]->transID )) {
-										if (!rank->budget->issuable(queue[i]->token)) {
-											queue[i]->blockCycles = queue[i]->blockCycles + 1;
-										}
-									}
-									else {
-										bool isFirstIssued = true;
-										for (size_t j = 0; j < queue.size(); j++) {
-											if (queue[j]->transID == queue[i]->transID && queue[j]->subReqID == 0) {
-												isFirstIssued = false;
-												break;
-											}
-										}
-										if (isFirstIssued) {
-											if (!rank->budget->issuable(queue[i]->token)) {
-												queue[i]->blockCycles = queue[i]->blockCycles + 1;
-											}
-										}
-									}
-								*/
-									if (!rank->budget->issuableAfterShifting(queue[i], queue)) {
-										queue[i]->blockCycles = queue[i]->blockCycles + 1;
-									}
-#if NO_SUB_REQUEST
-									else if (WriteInProgressed[queue[i]->rank][queue[i]->bank] &&
-												(TransInProgressed[queue[i]->rank][queue[i]->bank] != queue[i]->transID)) {
-										queue[i]->blockCycles = queue[i]->blockCycles + 1;
-									}
-#endif
-								}
-							}
+						Rank* rank = _ranks->at(rankNum);
+						// Check if queue is empty
+						if (queue.size() > 0) {
+							vector<Bank> &banks = rank->banks;
+							banks[bankNum].addBlockCycles();
 						}
 						//rank round robin
 						if (queuingStructure == PerRank)
@@ -713,7 +673,7 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
 							if (startingRank == rankNum && startingBank == bankNum)
 							{
 								break;
-						}
+							}
 						}
 					} while (true);
 				}

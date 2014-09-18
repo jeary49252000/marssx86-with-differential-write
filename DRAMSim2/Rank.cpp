@@ -395,3 +395,24 @@ void Rank::powerUp()
 		bankStates[i].currentBankState = Idle;
 	}
 }
+
+
+// laisky: waiting for power budget cycles
+uint64_t Rank::getAverage_BankBlockCycles() {
+	uint64_t sum = 0;
+	for (size_t i = 0; i < banks.size(); i++) {
+		sum += banks[i].getBlockCycles();
+	}
+
+	return sum/banks.size();
+}
+
+uint64_t Rank::getMax_BankBlockCycles() {
+	uint64_t max = 0;
+	for (size_t i = 0; i < banks.size(); i++) {
+		if (banks[i].getBlockCycles() > max)
+			max = banks[i].getBlockCycles();
+	}
+
+	return max;
+}

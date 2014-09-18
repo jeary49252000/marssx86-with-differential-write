@@ -83,6 +83,10 @@ public:
 	vector<Bank> banks;
 	vector<BankState> bankStates;
 
+	
+	// laisky: waiting for power budget cycles
+	uint64_t getAverage_BankBlockCycles();
+	uint64_t getMax_BankBlockCycles();
 };
 }
 #endif

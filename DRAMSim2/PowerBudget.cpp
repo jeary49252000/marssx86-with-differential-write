@@ -5,7 +5,7 @@ using namespace DRAMSim;
 
 #define DEBUG 0
 #define MAX_BITS_TO_SHIFT 128
-#define DYNAMIC_DIVISION 1
+#define DYNAMIC_DIVISION 0
 #define ISSUE_LESS 1
 #define ISSUE_MORE 1
 #define SHARED_BUDGET 0

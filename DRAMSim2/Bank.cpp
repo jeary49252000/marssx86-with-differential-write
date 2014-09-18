@@ -43,7 +43,9 @@ Bank::Bank(ostream &dramsim_log_):
 		currentState(dramsim_log_), 
 		rowEntries(NUM_COLS),
 		dramsim_log(dramsim_log_)
-{}
+{
+	iniBlockCycles();
+}
 
 /* The bank class is just a glorified sparse storage data structure
  * that keeps track of written data in case the simulator wants a
@@ -142,3 +144,15 @@ void Bank::write(const BusPacket *busPacket)
 	}
 }
 
+// laisky: waiting for power budget cycles
+void Bank::iniBlockCycles() {
+	blockCycles = 0;
+}
+
+void Bank::addBlockCycles() {
+	blockCycles++;
+}
+
+uint64_t Bank::getBlockCycles() {
+	return blockCycles;
+}

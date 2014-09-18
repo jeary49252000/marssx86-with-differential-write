@@ -68,6 +68,8 @@ public:
 
 	//fields
 	BankState currentState;
+	void addBlockCycles();
+	uint64_t getBlockCycles();
 
 private:
 	// private member
@@ -75,6 +77,9 @@ private:
 	ostream &dramsim_log; 
 
 	static DataStruct *searchForRow(unsigned row, DataStruct *head);
+	// laisky: waiting for power budget cycles
+	uint64_t blockCycles;
+	void iniBlockCycles();
 };
 }
 

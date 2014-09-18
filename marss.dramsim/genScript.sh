@@ -115,18 +115,13 @@ unlink '$IMAGE_DIRECTOR''$m'.'$i'.'$j'.'$k'.'$l'.qcow; ' > script/$m.$i.$j.$k.$l
 #TYPE='budget'
 TYPE='budget_schedule'
 #ATTR='scheme6.r2.col64.sub.dynamic.issuemore'
-#ATTR='r2.sub.dynamic.WTcollected'
-#ATTR='r2.sub.dynamic.WTcollected2'
+#ATTR='r2.sub.dynamic'
+#ATTR='r2.sub.dynamic.BC'
 #ATTR='r2.nosub.dynamic'
-#ATTR='r2.nosub.dynamic.WTcollected2'
-ATTR='r2.nosub.dynamic.WTcollected3'
-#ATTR='r2.nosub.dynamic.WTcollected'
+#ATTR='r2.nosub.dynamic.BC'
 #ATTR='r2.nosub.static'
-#ATTR='r2.nosub.static.WTcollected'
-#ATTR='r2.nosub.static.WTcollected2'
 #ATTR='r2.sub.static'
-#ATTR='r2.sub.static.WTcollected'
-#ATTR='r2.sub.static.WTcollected2'
+ATTR='r2.sub.static.BC'
 echo '-corefreq 4000000000
 -machine private_L3
 -stopinsns 1501000000

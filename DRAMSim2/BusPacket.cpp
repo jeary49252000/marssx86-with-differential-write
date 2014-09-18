@@ -106,8 +106,6 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
             break;
     }
 
-	// laisky: waiting counter initialization
-	blockCycles = 0;
 }
 
 // scyu: add differential write information
@@ -141,8 +139,6 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
     }
     // scyu: set sub-request ID
     subReqID = iter;
-	// laisky: waiting counter initialization
-	blockCycles = 0;
 }
 
 // scyu: add differential write information
@@ -177,8 +173,6 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
     }
     // scyu: set sub-request ID
     subReqID = iter;
-	// laisky: waiting counter initialization
-	blockCycles = 0;
 }
 
 
