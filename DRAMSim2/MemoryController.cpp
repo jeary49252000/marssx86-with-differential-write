@@ -61,6 +61,12 @@ void MemoryController::resetHistory()
     // scyu: add differential write information 
     totalBitSetCount   = 0;
     totalBitResetCount = 0;
+	
+	// laisky: analyze the scheduling problem [why two way is better than one way]
+	SumMaxToken1stD 	= 0;
+	SumMaxToken2ndD 	= 0;
+	MaxMaxToken1stD 	= 0;
+	MaxMaxToken2ndD 	= 0;
 }
 
 MemoryController::MemoryController(MemorySystem *parent, CSVWriter &csvOut_, ostream &dramsim_log_) :
@@ -224,7 +230,11 @@ void MemoryController::update()
 			{
                 // scyu: sub-request, check commit packet here
                 // only commit the last packet
-                if(outgoingDataPacket->busPacketType == DATA && outgoingDataPacket->subReqID == SUB_REQUEST_COUNT-1){
+                if(outgoingDataPacket->busPacketType == DATA){
+					(*outgoingDataPacket->counter)++;
+				}
+                //if(outgoingDataPacket->busPacketType == DATA && outgoingDataPacket->subReqID == SUB_REQUEST_COUNT-1 && outgoingDataPacket->counter == SUB_REQUEST_COUNT){
+                if(outgoingDataPacket->busPacketType == DATA && *(outgoingDataPacket->counter) == SUB_REQUEST_COUNT){
 				    (*parentMemorySystem->WriteDataDone)(parentMemorySystem->systemID,outgoingDataPacket->physicalAddress, currentClockCycle);
                 }
 
@@ -325,9 +335,11 @@ void MemoryController::update()
 		if (poppedBusPacket->busPacketType == WRITE || poppedBusPacket->busPacketType == WRITE_P)
 		{
             // scyu: add information for sub-request
-            writeDataToSend.push_back(new BusPacket(DATA, poppedBusPacket->physicalAddress, poppedBusPacket->column,
+			BusPacket * NewData = new BusPacket(DATA, poppedBusPacket->physicalAddress, poppedBusPacket->column,
 			                                    poppedBusPacket->row, poppedBusPacket->rank, poppedBusPacket->bank,
-			                                    poppedBusPacket->data, poppedBusPacket->token, poppedBusPacket->subReqID, dramsim_log, poppedBusPacket->timeAdded));
+			                                    poppedBusPacket->data, poppedBusPacket->token, poppedBusPacket->subReqID, dramsim_log, poppedBusPacket->timeAdded);
+			NewData->counter = poppedBusPacket->counter;
+            writeDataToSend.push_back(NewData);
 			writeDataCountdown.push_back(WL);
 		}
 
@@ -410,7 +422,17 @@ void MemoryController::update()
 					
                     //bankStates[rank][bank].stateChangeCountdown = WRITE_TO_PRE_DELAY;
 					bankStates[rank][bank].stateChangeCountdown = (WL+BL/2+ iter*tWR);
-
+					
+					if (poppedBusPacket->subReqID == 0) {
+						if (poppedBusPacket->getMaxToken() > MaxMaxToken1stD)
+							MaxMaxToken1stD = poppedBusPacket->getMaxToken();
+						SumMaxToken1stD += poppedBusPacket->getMaxToken();
+					}
+					else if (poppedBusPacket->subReqID == SUB_REQUEST_COUNT - 1) {
+						if (poppedBusPacket->getMaxToken() > MaxMaxToken2ndD)
+							MaxMaxToken2ndD = poppedBusPacket->getMaxToken();
+						SumMaxToken2ndD += poppedBusPacket->getMaxToken();
+					}
 
 				}
 				else if (poppedBusPacket->busPacketType == WRITE)
@@ -644,7 +666,8 @@ void MemoryController::update()
             BusPacket *command = new BusPacket(bpType, transaction->address,
                     newTransactionColumn, newTransactionRow, newTransactionRank,
                     newTransactionBank, transaction->data, transaction->token, transaction->iteration, transaction->transID, dramsim_log, transaction->timeAdded);
-
+			
+			command->counter = transaction->counter;
             commandQueue.enqueue(ACTcommand);
             commandQueue.enqueue(command);
 
@@ -919,7 +942,26 @@ bool MemoryController::addTransaction(Transaction *trans)
             for(size_t i=0; i<=(LINE_SIZE>>3)-1; ++i){
                     sub_mask[i%SUB_REQUEST_COUNT][i/SUB_REQUEST_COUNT] = trans->diffMask[i];
             }
-#endif         
+#endif 
+
+			uint64_t * counter = new uint64_t(0);
+#if NO_SUB_REQUEST
+			// laisky: for baseline to consume the max one
+			// add all the token information to one sub_request
+			uint64_t max_tokens[SUB_REQUEST_COUNT][NUM_CHIPS];
+			for (size_t j=0; j <= SUB_REQUEST_COUNT-1; ++j) {
+               	Rank* r = ranks->at(rank);
+               	r->budget->mappingFunction(sub_mask[j], max_tokens[j]);
+			}
+			for (size_t i = 0; i <= NUM_CHIPS-1; ++i) {
+				uint64_t bigger = 0;
+				for (size_t j = 0; j <= SUB_REQUEST_COUNT-1; ++j) {
+					if( max_tokens[j][i] > bigger)
+						bigger = max_tokens[j][i];
+				}
+				allocated_token[i] = bigger;
+			}
+#endif
             for(size_t i=0; i<=SUB_REQUEST_COUNT-1; ++i){
 #if 0
                 for(size_t j=0; j<=((LINE_SIZE>>3)/SUB_REQUEST_COUNT)-1; ++j){
@@ -927,11 +969,14 @@ bool MemoryController::addTransaction(Transaction *trans)
                 }
 #endif
                 // assign allocated token info to transactions
+#if !NO_SUB_REQUEST
                 Rank* r = ranks->at(rank);
                 r->budget->mappingFunction(sub_mask[i],  allocated_token);
+#endif
                 Transaction *sub_trans = new Transaction(trans->transactionType, trans->address, trans->data, allocated_token, true, i);
                 sub_trans->timeAdded = currentClockCycle;
                 sub_trans->transID = transactionID; 
+				sub_trans->counter = counter;
                 transactionQueue.push_back(sub_trans);
                 commandQueue.WriteReqNum[rank][bank] ++;
                 /*
@@ -1031,9 +1076,16 @@ void MemoryController::getDramStats(string &sb)
     sb += "current average bank block cycles [2] : "+       NumberToString(rank->getAverage_BankBlockCycles());
     sb += "\n";
     sb += "current max bank block cycles [2] : "+     NumberToString(rank->getMax_BankBlockCycles());
-    
-    
+     
+    sb += "\n";
+    sb += "current average max request token [1] : "+       NumberToString(double(SumMaxToken1stD)/totalWriteCount);
+    sb += "\n";
+    sb += "current max max request token [1] : "+     NumberToString(MaxMaxToken1stD);
 
+    sb += "\n";
+    sb += "current average max request token [2] : "+       NumberToString(double(SumMaxToken2ndD)/totalWriteCount);
+    sb += "\n";
+    sb += "current max max request token [2] : "+     NumberToString(MaxMaxToken2ndD);
 }
 
 //prints statistics at the end of an epoch or  simulation

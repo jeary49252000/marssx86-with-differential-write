@@ -39,19 +39,22 @@ w320.r80.b16
 #Benchmark=( 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c 473.astar.8c);
 #Benchmark=( 410.bwaves.8c 429.mcf.8c 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c);
 #Benchmark=( parsec.freqmine.8c parsec.x264.8c parsec.vips.8c parsec.facesim.8c);
-Benchmark=( 429.mcf.8c 433.milc.8c.180 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c parsec.x264.8c parsec.facesim.8c);
+#Benchmark=( 429.mcf.8c 433.milc.8c.180 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c parsec.x264.8c parsec.facesim.8c);
+#Benchmark=( 429.mcf.8c 433.milc.8c.180 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c parsec.facesim.8c);
+#Benchmark=( 470.lbm.8c parsec.x264.8c parsec.facesim.8c);
 #Benchmark=( 429.mcf.8c 433.milc.8c.180 437.leslie3d.8c 462.libquantum.8c 470.lbm.8c parsec.facesim.8c);
 #Benchmark=( 429.mcf.8c 433.milc.8c.180 437.leslie3d.8c 462.libquantum.8c parsec.facesim.8c);
-#Benchmark=( 429.mcf.8c parsec.facesim.8c );
+Benchmark=( 429.mcf.8c parsec.x264.8c);
+#Benchmark=( 429.mcf.8c );
 #Benchmark=( 433.milc.8c.180 parsec.facesim.8c);
-#Benchmark=( 462.libquantum.8c 470.lbm.8c parsec.x264.8c parsec.facesim.8c);
+#Benchmark=( parsec.x264.8c );
 #Benchmark=( parsec.x264.8c );
 #Benchmark=( 462.libquantum.8c parsec.facesim.8c );
 #Benchmark=( 462.libquantum.8c );
 #Benchmark=( 433.milc.8c.180 470.lbm.8c parsec.x264.8c parsec.facesim.8c );
 #Benchmark=( 462.libquantum.8c 470.lbm.8c parsec.x264.8c );
 #Benchmark=( 470.lbm.8c );
-#Benchmark=( 437.leslie3d.8c parsec.x264.8c );
+#Benchmark=( 437.leslie3d.8c );
 #Benchmark=( parsec.x264.8c );
 #Benchmark=(470.lbm.8c);
 

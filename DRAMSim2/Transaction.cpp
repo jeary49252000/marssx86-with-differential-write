@@ -47,7 +47,11 @@ Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat) :
 	transactionType(transType),
 	address(addr),
 	data(dat)
-{}
+{
+
+	// laisky
+	counter = NULL;
+}
 
 // scyu: copy diff_mask
 Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, uint64_t diff_mask[]) :
@@ -61,6 +65,8 @@ Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, ui
            diffMask[i] = diff_mask[i];
         }
     }
+	// laisky
+	counter = NULL;
 }
 
 // scyu: copy allocated_token
@@ -77,6 +83,8 @@ Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, ui
            token[i] = allocated_token[i];
         }
     }  
+	// laisky
+	counter = NULL;
 }
 
 
@@ -91,6 +99,8 @@ Transaction::Transaction(const Transaction &t)
 	ERROR("Data storage is really outdated and these copies happen in an \n improper way, which will eventually cause problems. Please send an \n email to dramninjas [at] gmail [dot] com if you need data storage");
 	abort(); 
 	#endif
+	// laisky
+	counter = NULL;
 }
 
 ostream &operator<<(ostream &os, const Transaction &t)

@@ -105,7 +105,8 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
             iterations = 1;
             break;
     }
-
+	// laisky
+	counter = NULL;
 }
 
 // scyu: add differential write information
@@ -139,6 +140,8 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
     }
     // scyu: set sub-request ID
     subReqID = iter;
+	// laisky
+	counter = NULL;
 }
 
 // scyu: add differential write information
@@ -173,9 +176,18 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
     }
     // scyu: set sub-request ID
     subReqID = iter;
+	// laisky
+	counter = NULL;
 }
 
-
+/*
+void BusPacket::copyTokens(uint64_t ** tokens) {
+	for (size_t i = 0; i <= SUB_REQUEST_COUNT -1; ++i) {
+		for (size_t j = 0; j <=NUM_CHIPS - 1; ++j) {
+			this->tokens[i][j] = tokens[i][j];
+		}
+	}
+}*/
 
 void BusPacket::print(uint64_t currentClockCycle, bool dataStart)
 {
@@ -274,4 +286,15 @@ void BusPacket::printData() const
 		PRINTN(((uint64_t *)data)[i]);
 	}
 	PRINTN("'" << dec);
+}
+
+
+// laisky: analyze the scheduling problem [why two way is better than one way]
+uint64_t BusPacket::getMaxToken() {
+	uint64_t max = 0;
+	for(size_t i=0; i<=NUM_CHIPS-1; ++i) {
+		if (max < token[i])
+			max = token[i];
+	}
+	return max;
 }

@@ -46,6 +46,8 @@
 #include "Rank.h"
 #include "CSVWriter.h"
 #include <map>
+// scyu: NO_SUB_REQUEST
+#define NO_SUB_REQUEST 1
 
 using namespace std;
 
@@ -62,6 +64,11 @@ public:
 
     // scyu: add differential write information
     vector<Rank *>* getRank(){return ranks;}
+	// laisky: analyze the scheduling problem [why two way is better than one way]
+	uint64_t SumMaxToken1stD;
+	uint64_t SumMaxToken2ndD;
+	uint64_t MaxMaxToken1stD;
+	uint64_t MaxMaxToken2ndD;
 
 
 	bool addTransaction(Transaction *trans);

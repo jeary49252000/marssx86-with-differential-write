@@ -44,8 +44,6 @@
 #include "MemoryController.h"
 #include <assert.h>
 
-// scyu: NO_SUB_REQUEST
-#define NO_SUB_REQUEST 0 
 
 using namespace DRAMSim;
 

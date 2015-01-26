@@ -70,7 +70,13 @@ public:
     uint64_t transID;
     uint64_t token[NUM_CHIPS];
 
-
+	// laisky: counter for commit
+	uint64_t * counter;
+	// laisky: for baseline to consume the max one
+	//uint64_t tokens[SUB_REQUEST_COUNT][NUM_CHIPS];
+	//void copyTokens(uint64_t ** tokens);
+	// laisky: analyze the scheduling problem [why two way is better than one way]
+	uint64_t getMaxToken();
 	//Functions
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, uint64_t time);
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t allocated_token[], unsigned iter, ostream &dramsim_log_, uint64_t time);

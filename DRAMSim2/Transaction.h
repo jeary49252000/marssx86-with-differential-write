@@ -66,6 +66,11 @@ public:
     uint64_t timeAdded;
 	uint64_t timeReturned;
 
+	// laisky: counter for commit
+	uint64_t * counter;
+	// laisky: for baseline to consume the max one (change the tokens to the max one directly)
+	//uint64_t tokens[SUB_REQUEST_COUNT][NUM_CHIPS]; 
+
 	friend ostream &operator<<(ostream &os, const Transaction &t);
 	//functions
 	Transaction(TransactionType transType, uint64_t addr, void *data);
