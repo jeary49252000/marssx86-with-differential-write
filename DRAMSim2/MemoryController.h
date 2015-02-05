@@ -47,7 +47,7 @@
 #include "CSVWriter.h"
 #include <map>
 // scyu: NO_SUB_REQUEST
-#define NO_SUB_REQUEST 1
+#define NO_SUB_REQUEST 0
 
 using namespace std;
 
@@ -69,6 +69,8 @@ public:
 	uint64_t SumMaxToken2ndD;
 	uint64_t MaxMaxToken1stD;
 	uint64_t MaxMaxToken2ndD;
+	// laisky: analyze the token shift
+	uint64_t tokenShift;
 
 
 	bool addTransaction(Transaction *trans);

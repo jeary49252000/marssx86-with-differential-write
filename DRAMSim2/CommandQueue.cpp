@@ -588,7 +588,12 @@ bool CommandQueue::pop(BusPacket **busPacket, vector<Rank *>* ranks)
 					Rank* r = _ranks->at((*busPacket)->rank);
 					// check could be shifted or not
 					if(r->budget->issuableAfterShifting(*busPacket, queue)){
-						// shift it    
+						// shift it 
+						if (!r->budget->issuable((*busPacket)->token)) {
+							if (r->budget->shiftSubReq(busPacket, queue, false)) {
+								(*busPacket)->shifted = true;
+							}
+						}
 						if(!r->budget->shiftSubReq(busPacket, queue, true) && !r->budget->issuable((*busPacket)->token)){
 							// failed to shift and is not issuable => no issuable packet
 							busPacket = NULL;

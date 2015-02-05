@@ -107,6 +107,7 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
     }
 	// laisky
 	counter = NULL;
+	shifted = false;
 }
 
 // scyu: add differential write information
@@ -142,6 +143,7 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
     subReqID = iter;
 	// laisky
 	counter = NULL;
+	shifted = false;
 }
 
 // scyu: add differential write information
@@ -178,6 +180,7 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
     subReqID = iter;
 	// laisky
 	counter = NULL;
+	shifted = false;
 }
 
 /*

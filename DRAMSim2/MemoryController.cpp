@@ -41,7 +41,7 @@
 #include "Iteration.h"
 #include <sstream>
 #define SEQUENTIAL(rank,bank) (rank*NUM_BANKS)+bank
-
+#define BaseLine 0
 using namespace DRAMSim;
 
 
@@ -67,6 +67,7 @@ void MemoryController::resetHistory()
 	SumMaxToken2ndD 	= 0;
 	MaxMaxToken1stD 	= 0;
 	MaxMaxToken2ndD 	= 0;
+	tokenShift = 0;
 }
 
 MemoryController::MemoryController(MemorySystem *parent, CSVWriter &csvOut_, ostream &dramsim_log_) :
@@ -233,6 +234,11 @@ void MemoryController::update()
                 if(outgoingDataPacket->busPacketType == DATA){
 					(*outgoingDataPacket->counter)++;
 				}
+				// laisky: analyze the token shift
+				if (outgoingDataPacket->shifted) {
+					tokenShift++;
+				}
+
                 //if(outgoingDataPacket->busPacketType == DATA && outgoingDataPacket->subReqID == SUB_REQUEST_COUNT-1 && outgoingDataPacket->counter == SUB_REQUEST_COUNT){
                 if(outgoingDataPacket->busPacketType == DATA && *(outgoingDataPacket->counter) == SUB_REQUEST_COUNT){
 				    (*parentMemorySystem->WriteDataDone)(parentMemorySystem->systemID,outgoingDataPacket->physicalAddress, currentClockCycle);
@@ -339,6 +345,7 @@ void MemoryController::update()
 			                                    poppedBusPacket->row, poppedBusPacket->rank, poppedBusPacket->bank,
 			                                    poppedBusPacket->data, poppedBusPacket->token, poppedBusPacket->subReqID, dramsim_log, poppedBusPacket->timeAdded);
 			NewData->counter = poppedBusPacket->counter;
+			NewData->shifted = poppedBusPacket->shifted;
             writeDataToSend.push_back(NewData);
 			writeDataCountdown.push_back(WL);
 		}
@@ -945,7 +952,7 @@ bool MemoryController::addTransaction(Transaction *trans)
 #endif 
 
 			uint64_t * counter = new uint64_t(0);
-#if NO_SUB_REQUEST
+#if BaseLine
 			// laisky: for baseline to consume the max one
 			// add all the token information to one sub_request
 			uint64_t max_tokens[SUB_REQUEST_COUNT][NUM_CHIPS];
@@ -969,7 +976,7 @@ bool MemoryController::addTransaction(Transaction *trans)
                 }
 #endif
                 // assign allocated token info to transactions
-#if !NO_SUB_REQUEST
+#if !BaseLine
                 Rank* r = ranks->at(rank);
                 r->budget->mappingFunction(sub_mask[i],  allocated_token);
 #endif
@@ -1086,6 +1093,10 @@ void MemoryController::getDramStats(string &sb)
     sb += "current average max request token [2] : "+       NumberToString(double(SumMaxToken2ndD)/totalWriteCount);
     sb += "\n";
     sb += "current max max request token [2] : "+     NumberToString(MaxMaxToken2ndD);
+    sb += "\n";
+    sb += "current average tokenShift per division : "+       NumberToString(double(tokenShift)/totalWriteCount);
+    sb += "\n";
+    sb += "current average tokenShift per write : "+       NumberToString(double(tokenShift)/(2.0*totalWriteCount));
 }
 
 //prints statistics at the end of an epoch or  simulation

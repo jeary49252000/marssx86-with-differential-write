@@ -77,6 +77,8 @@ public:
 	//void copyTokens(uint64_t ** tokens);
 	// laisky: analyze the scheduling problem [why two way is better than one way]
 	uint64_t getMaxToken();
+	// laisky:
+	bool shifted;
 	//Functions
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, uint64_t time);
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t allocated_token[], unsigned iter, ostream &dramsim_log_, uint64_t time);
