@@ -68,8 +68,8 @@ public:
 
 	// laisky: counter for commit
 	uint64_t * counter;
-	// laisky: for baseline to consume the max one (change the tokens to the max one directly)
-	//uint64_t tokens[SUB_REQUEST_COUNT][NUM_CHIPS]; 
+	// laisky: trace the power utilization for BaseLine
+	uint64_t real_token[NUM_CHIPS];
 
 	friend ostream &operator<<(ostream &os, const Transaction &t);
 	//functions

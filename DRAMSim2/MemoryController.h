@@ -71,6 +71,15 @@ public:
 	uint64_t MaxMaxToken2ndD;
 	// laisky: analyze the token shift
 	uint64_t tokenShift;
+	// laisky: trace the power utilization
+	double rank1_utilization;
+	double rank2_utilization;
+	double countTimes1;
+	double countTimes2;
+	double rank1_max_utilization;
+	double rank2_max_utilization;
+	double rank1_range_utilization[10];
+	double rank2_range_utilization[10];
 
 
 	bool addTransaction(Transaction *trans);

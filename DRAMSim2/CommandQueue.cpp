@@ -1027,6 +1027,7 @@ bool CommandQueue::isIssuable(BusPacket *busPacket)
 					//  issueable if consumed power < power budget
 					Rank* r = _ranks->at(busPacket->rank);
 					r->budget->reclaim(currentClockCycle);
+					r->budget->real_reclaim(currentClockCycle);
 				}
 				return true;
 			}
@@ -1048,6 +1049,7 @@ bool CommandQueue::isIssuable(BusPacket *busPacket)
 					//  issueable if consumed power < power budget
 					Rank* r = _ranks->at(busPacket->rank);
 					r->budget->reclaim(currentClockCycle);
+					r->budget->real_reclaim(currentClockCycle);
 					if(!FLEXIBLE_WRITE_CONFIG){
 						// for our mechanism, not check issuable here since there is chance to split it
 						return (BUDGET_AWARE_SCHEDULE) || r->budget->issuable(busPacket->token); 

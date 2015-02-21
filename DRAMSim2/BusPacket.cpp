@@ -301,3 +301,9 @@ uint64_t BusPacket::getMaxToken() {
 	}
 	return max;
 }
+
+void BusPacket::copy_token(uint64_t real_token[]) {
+	for (size_t i = 0; i <= NUM_CHIPS-1; ++i) {
+		this->real_token[i] = real_token[i];
+	}
+}

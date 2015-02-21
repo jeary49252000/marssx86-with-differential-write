@@ -72,9 +72,10 @@ public:
 
 	// laisky: counter for commit
 	uint64_t * counter;
-	// laisky: for baseline to consume the max one
-	//uint64_t tokens[SUB_REQUEST_COUNT][NUM_CHIPS];
-	//void copyTokens(uint64_t ** tokens);
+	// laisky: trace the power utilization for BaseLine
+	uint64_t real_token[NUM_CHIPS];
+	void copy_token(uint64_t real_token[]);
+
 	// laisky: analyze the scheduling problem [why two way is better than one way]
 	uint64_t getMaxToken();
 	// laisky:

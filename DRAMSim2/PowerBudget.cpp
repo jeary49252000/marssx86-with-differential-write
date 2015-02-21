@@ -5,7 +5,7 @@ using namespace DRAMSim;
 
 #define DEBUG 0
 #define MAX_BITS_TO_SHIFT 128
-#define DYNAMIC_DIVISION 1
+#define DYNAMIC_DIVISION 0
 #define ISSUE_LESS 1
 #define ISSUE_MORE 1
 #define SHARED_BUDGET 0
@@ -22,9 +22,14 @@ PowerBudget::PowerBudget(){
 PowerBudget::PowerBudget(uint16_t budget){
     line_num = (LINE_SIZE>>3)/SUB_REQUEST_COUNT;
     token = (int32_t*) malloc(NUM_CHIPS*sizeof(int32_t));
+    real_token = (int32_t*) malloc(NUM_CHIPS*sizeof(int32_t));
     issued_requests = (Request*) calloc(NUM_BANKS,sizeof(Request));
-    for(size_t i=0; i<=NUM_BANKS-1; ++i)
+    real_issued_requests = (Request*) calloc(NUM_BANKS,sizeof(Request));
+    for(size_t i=0; i<=NUM_BANKS-1; ++i) {
         issued_requests[i].token = (uint64_t*) calloc(line_num,sizeof(uint64_t));
+        real_issued_requests[i].token = (uint64_t*) calloc(line_num,sizeof(uint64_t));
+	}
+	utilization_sum = 0;
     setBudget(budget);
 
     if(POWER_BUDGETING)
@@ -54,10 +59,63 @@ PowerBudget::PowerBudget(uint16_t budget){
 #endif
 }
 
+bool PowerBudget::hasRequest(size_t bank) {
+	if (real_issued_requests[bank].completed_time != 0)
+		return true;
+	else 
+		return false;
+}
+
 void PowerBudget::setBudget(uint16_t budget){
     chip_budget = budget;
-    for(size_t i=0; i<=NUM_CHIPS-1; ++i)
+    for(size_t i=0; i<=NUM_CHIPS-1; ++i) {
         token[i] = budget;
+		real_token[i] = budget;
+	}
+}
+
+double PowerBudget::real_utilization() {
+	double largest = 0;
+	for (size_t i = 0; i <= NUM_CHIPS - 1; i++) {
+		double temp = ((double)(POWER_BUDGET_PER_CHIP - real_token[i]))/((double)POWER_BUDGET_PER_CHIP);
+		if (temp > largest)
+			largest = temp;
+	}
+	return largest;
+	//return (((double)sum)/((double)(POWER_BUDGET_PER_CHIP * NUM_CHIPS)));
+	//return utilization_sum; 
+}
+
+bool PowerBudget::real_consume(uint64_t* allocated_token, size_t bank_no, uint64_t completed_time){
+    bool    out_of_token = false;
+
+#if DEBUGdd
+    cout << "consume:\t" << dumpBudgetStatus(allocated_token) << endl;
+#endif
+
+#if SHARED_BUDGET
+    uint32_t remain_token = 0;
+    for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+        real_token[i] -= allocated_token[i];
+        remain_token += real_token[i];
+    }
+    out_of_token = remain_token < 0;
+#else
+    for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+        real_token[i] -= allocated_token[i];
+        if(real_token[i] <= 0)
+            out_of_token = true;
+    }
+#endif
+
+    if(out_of_token){
+        real_reclaimLine(allocated_token);
+        return false;
+    }
+    for(size_t i=0; i<=line_num-1; ++i)
+        real_issued_requests[bank_no].token[i] = allocated_token[i];     
+    real_issued_requests[bank_no].completed_time = completed_time;     
+    return true;
 }
 
 bool PowerBudget::consume(uint64_t* allocated_token, size_t bank_no, uint64_t completed_time){
@@ -157,6 +215,14 @@ void PowerBudget::doFWC(uint64_t* allocated_token, bool* need_more_iter){
         }
     }
 }
+void PowerBudget::real_reclaimLine(uint64_t* allocated_token){
+#if DEBUG
+    cout << "reclaim:\t" << dumpBudgetStatus(allocated_token) << endl; 
+#endif
+    for(size_t i=0; i<=NUM_CHIPS-1; ++i){
+        real_token[i] += allocated_token[i]; 
+    }
+}
 
 void PowerBudget::reclaimLine(uint64_t* allocated_token){
 #if DEBUG
@@ -164,6 +230,18 @@ void PowerBudget::reclaimLine(uint64_t* allocated_token){
 #endif
     for(size_t i=0; i<=NUM_CHIPS-1; ++i){
         token[i] += allocated_token[i]; 
+    }
+}
+
+void PowerBudget::real_reclaim(uint64_t current_time){
+    for(size_t i=0; i<=NUM_BANKS-1; ++i){
+        if((current_time >= real_issued_requests[i].completed_time) 
+                && (real_issued_requests[i].completed_time > 0)){
+            real_reclaimLine(real_issued_requests[i].token);
+            for(size_t j=0; j<=line_num-1; ++j)
+                real_issued_requests[i].token[j] = 0;     
+            real_issued_requests[i].completed_time = 0;
+        }
     }
 }
 
@@ -423,3 +501,4 @@ uint8_t PowerBudget::getIterations(uint64_t* allocated_token){
     }
     return iter;
 }
+

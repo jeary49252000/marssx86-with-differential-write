@@ -17,6 +17,8 @@ class PowerBudget
 {
     uint16_t chip_budget;
     int32_t* token;
+	int32_t* real_token;
+	double utilization_sum;
     int16_t line_num;
    
     typedef struct request{
@@ -25,9 +27,11 @@ class PowerBudget
     } Request;
     
     Request* issued_requests;    
+    Request* real_issued_requests;    
 public:
     PowerBudget();
     PowerBudget(uint16_t budget);
+	bool hasRequest(size_t bank); 
     void setBudget(uint16_t budget);
     bool issuable(uint64_t* line);
     bool issuableAfterShifting(BusPacket* req, vector<BusPacket *> &victims);
@@ -37,6 +41,10 @@ public:
     bool consume(uint64_t* line, size_t bank_no, uint64_t completed_time);
     void reclaimLine(uint64_t* line);
     void reclaim(uint64_t curr_time);
+    bool real_consume(uint64_t* line, size_t bank_no, uint64_t completed_time);
+    void real_reclaimLine(uint64_t* line);
+    void real_reclaim(uint64_t curr_time);
+	double real_utilization();
     uint32_t inline countTokens(uint64_t sub_line);
     string dumpBudgetStatus(uint64_t* allocated_token);
     string dumpRequestStatus(uint64_t* line);
