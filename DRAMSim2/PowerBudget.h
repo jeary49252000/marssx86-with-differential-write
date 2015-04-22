@@ -30,6 +30,8 @@ class PowerBudget
     Request* real_issued_requests;    
 public:
     PowerBudget();
+	uint64_t countShiftIndex(uint64_t * line, uint64_t chip, uint64_t token);
+	uint64_t countBudget(uint64_t * line, size_t chip, uint64_t index);
     PowerBudget(uint16_t budget);
 	bool hasRequest(size_t bank); 
     void setBudget(uint16_t budget);

@@ -7,7 +7,8 @@ using namespace DRAMSim;
 #define MAX_BITS_TO_SHIFT 128
 #define DYNAMIC_DIVISION 0
 #define ISSUE_LESS 1
-#define ISSUE_MORE 1
+#define ISSUE_MORE 0
+#define ISSUE_TO_SMALLEST 0
 #define SHARED_BUDGET 0
 #define BYTE_INTERLEAVING 0
 
@@ -335,6 +336,46 @@ bool PowerBudget::issuableAfterShifting(BusPacket* req, vector<BusPacket *> &que
 #endif
 }
 
+uint64_t PowerBudget::countShiftIndex(uint64_t * line, size_t chip, uint64_t token) {
+    size_t line_per_chip = line_num/NUM_CHIPS;
+	uint64_t count = 0;
+	uint64_t index = 0;
+    for(size_t j = 0; j <= line_per_chip - 1; ++j) {
+		if (count == token)
+			break;
+		for (size_t k = 0; k < 64; ++k) {
+			if (count == token) {
+				index = j * line_per_chip + k - 1;
+				break;
+			}
+			if (line[chip*line_per_chip+j] & (1 << k)) {
+				count++;	
+			}
+		}
+    }
+	return index;
+}
+
+uint64_t PowerBudget::countBudget(uint64_t * line, size_t chip, uint64_t index) {
+    size_t line_per_chip = line_num/NUM_CHIPS;
+	uint64_t count = 0;
+    for(size_t j = 0; j <= line_per_chip - 1; ++j) {
+		bool hitIndex = false;
+		for (size_t k = 0; k < 64; ++k) {
+			if (line[chip*line_per_chip+j] & (1 << k)) {
+				count++;	
+			}
+			if (j * line_per_chip + k == index) {
+				hitIndex = true;
+				break;
+			}
+		}
+		if (hitIndex)
+			break;
+    }
+	return count;
+}
+
 // do_shift = false: try issuable after shifting or not, not do the shifting immediately  
 bool PowerBudget::shiftSubReq(BusPacket** req, vector<BusPacket *> &queue, bool do_shift){
     vector<size_t> victim_index;
@@ -350,6 +391,28 @@ bool PowerBudget::shiftSubReq(BusPacket** req, vector<BusPacket *> &queue, bool 
         need_shift |= loan[i] > 0;
 #endif
     }
+
+#if ISSUE_TO_SMALLEST
+	//cout << "Enter shifting" << endl;
+	uint64_t smallestIndex = 64*((LINE_SIZE>>3)/SUB_REQUEST_COUNT);
+	uint64_t index = 0;
+	for(size_t i=0; i<=NUM_CHIPS-1; ++i) {
+		if  ((*req)->token[i] > token[i]) {
+			need_shift = true;
+			uint64_t tempIndex = countShiftIndex((*req)->sub_mask, i, token[i]);
+			if (tempIndex < smallestIndex) {
+				index = i;
+				smallestIndex = tempIndex;
+			}
+		}	
+	}
+	for(size_t i=0; i<=NUM_CHIPS-1; ++i) {
+		loan[i] = (*req)->token[i] - countBudget((*req)->sub_mask, i, smallestIndex);	
+	}
+	if (loan[index] == (*req)->token[index] - token[index]) {
+		//cout << "Yes" << endl;
+	}
+#endif
 
     // no need to shift
     if(!need_shift){    

@@ -69,6 +69,12 @@ Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, ui
 	counter = NULL;
 }
 
+void Transaction::copyMask(uint64_t * mask) {
+	for (size_t i = 0; i < ((LINE_SIZE>>3)/SUB_REQUEST_COUNT); ++i) {
+		sub_mask[i] = mask[i];
+	}
+}
+
 // scyu: copy allocated_token
 Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, uint64_t allocated_token[], bool is_sub_request, uint8_t iter) :
 	transactionType(transType),

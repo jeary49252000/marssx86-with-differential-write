@@ -43,6 +43,9 @@
 #define SEQUENTIAL(rank,bank) (rank*NUM_BANKS)+bank
 #define BaseLine 0
 #define DYNAMIC 0
+//#define DYNAMIC_MORE_CYCLES tRTP+8
+#define DYNAMIC_MORE_CYCLES 0
+#define COUNTTIMES 100000
 using namespace DRAMSim;
 
 
@@ -69,16 +72,16 @@ void MemoryController::resetHistory()
 	MaxMaxToken1stD 	= 0;
 	MaxMaxToken2ndD 	= 0;
 	tokenShift = 0;
-	rank1_utilization = 0;
-	rank2_utilization = 0;
-	rank1_max_utilization = 0;
-	rank2_max_utilization = 0;
-	countTimes1 = 0;
-	countTimes2 = 0;
-	for (size_t i = 0; i < 10; i++)
-	{
-		rank1_range_utilization[i] = 0;
-		rank2_range_utilization[i] = 0;
+	for (size_t j = 0; j < 2; j++) {
+		rank_utilization[j] = 0;
+		rank_max_utilization[j] = 0;
+		countTimes[j] = 0;
+		countCycle[j] = 0;
+		for (size_t i = 0; i < 10; i++)
+		{
+			rank_range_utilization[j][i] = 0;
+			rank_max_range_utilization[j][i] = 0;
+		}
 	}
 }
 
@@ -184,6 +187,36 @@ void MemoryController::update()
 {
 
 	//PRINT(" ------------------------- [" << currentClockCycle << "] -------------------------");
+					bool burst = false;
+					bool check = true;
+					for (int rank = 0; rank < 2; rank++) {
+						Rank* trace_rank = ranks->at(rank);
+						int bankBursted = 0;
+						for (size_t i = 0; i < NUM_BANKS; ++i) {
+							if (commandQueue.WriteBurst[rank][i]) {
+								bankBursted++;
+								if (bankBursted >= 2) {
+									burst = true;
+									break;
+								}
+							}
+						}
+						if (burst) {
+							countTimes[rank]++;
+							double temp = trace_rank->budget->real_utilization();
+							rank_utilization[rank] += temp;
+							rank_range_utilization[rank][(size_t)(temp * 10.0)]++;
+							if (countTimes[rank] > COUNTTIMES) {
+								double now_utilization = rank_utilization[rank]/countTimes[rank];
+								if(rank_max_utilization[rank] < now_utilization) {
+									for (size_t i = 0; i < 10; i++) {
+										rank_max_range_utilization[rank][i] = rank_range_utilization[rank][i];
+									}
+									rank_max_utilization[rank] = now_utilization;
+								}
+							} 
+						}
+					}
 	
 
 	//update bank states
@@ -436,7 +469,7 @@ void MemoryController::update()
                     int iter = poppedBusPacket->iterations;
                     //bankStates[rank][bank].nextActivate = max(currentClockCycle + WRITE_AUTOPRE_DELAY,
 					//		bankStates[rank][bank].nextActivate);
-					bankStates[rank][bank].nextActivate = max(currentClockCycle + (WL+BL/2+iter*tWR+tRP),
+					bankStates[rank][bank].nextActivate = max(currentClockCycle + (WL+BL/2+iter*tWR+tRP) + DYNAMIC_MORE_CYCLES,
 							bankStates[rank][bank].nextActivate);
                     bankStates[rank][bank].lastCommand = WRITE_P;
 					
@@ -518,50 +551,6 @@ void MemoryController::update()
 #else
                     r->budget->real_consume(poppedBusPacket->real_token, bank, bankStates[rank][bank].nextWrite);
 #endif
-					bool burst1 = false;
-					bool burst2 = false;
-//					bool check = true;
-//#if DYNAMIC
-//	check = poppedBusPacket->shifted;
-//#endif
-//					if (commandQueue.WriteBurst[rank][bank] && check) {
-					if (commandQueue.WriteBurst[rank][bank]) {
-						Rank* trace_rank = NULL;
-						if (poppedBusPacket->rank == 0) {
-					 		trace_rank = ranks->at(0);
-						for (size_t i = 0; i < NUM_BANKS; ++i) {
-							if (commandQueue.WriteBurst[0][i] && i != bank) {
-								burst1 = true;
-								break;
-							}
-						}
-						if (burst1) {
-							countTimes1++;
-							double temp = trace_rank->budget->real_utilization();
-							if (temp > rank1_max_utilization)
-								rank1_max_utilization = temp;
-							rank1_utilization += temp;
-							rank1_range_utilization[(size_t)(temp * 10.0)]++;
-						}
-						}
-						else {
-							trace_rank = ranks->at(1);
-						for (size_t i = 0; i < NUM_BANKS; ++i) {
-							if (commandQueue.WriteBurst[1][i] && i != bank) {
-								burst2 = true;
-								break;
-							}
-						}
-						if (burst2) {
-							countTimes2++;
-							double temp = trace_rank->budget->real_utilization();
-							if (temp > rank2_max_utilization)
-								rank2_max_utilization = temp;
-							rank2_utilization += temp;
-							rank2_range_utilization[(size_t)(temp * 10.0)]++;
-						}
-						}
-					}
                 }
                 break;
             case ACTIVATE:
@@ -738,6 +727,7 @@ void MemoryController::update()
 #if BaseLine
 			command->copy_token(transaction->real_token);	
 #endif
+			command->copyMask(transaction->sub_mask);
 			command->counter = transaction->counter;
             commandQueue.enqueue(ACTcommand);
             commandQueue.enqueue(command);
@@ -1045,6 +1035,7 @@ bool MemoryController::addTransaction(Transaction *trans)
                 r->budget->mappingFunction(sub_mask[i],  allocated_token);
 #endif
                 Transaction *sub_trans = new Transaction(trans->transactionType, trans->address, trans->data, allocated_token, true, i);
+				sub_trans->copyMask(sub_mask[i]);
 #if BaseLine
 				// laisky: trace the power utilization for BaseLine
                 Rank* r_ = ranks->at(rank);
@@ -1147,25 +1138,27 @@ void MemoryController::getDramStats(string &sb)
     sb += "\n";
     sb += "current max bank block cycles [1] : "+     NumberToString(rank->getMax_BankBlockCycles());
     sb += "\n";
-    sb += "current max power budget utilization [1] : "+     NumberToString(rank1_max_utilization);
+    sb += "current max power budget utilization [1] : "+     NumberToString(rank_max_utilization[0]);
     sb += "\n";
-    sb += "current power budget utilization [1] : "+     NumberToString(rank1_utilization/countTimes1);
+    sb += "current power budget utilization [1] : "+     NumberToString(rank_utilization[0]/countTimes[0]);
+    sb += "\n";
+    sb += "current power budget utilization [1] Times : "+     NumberToString(countTimes[0]);
    	
 
 	double sum = 0;
 	for (size_t i = 0; i < 10; i++) {
-		sum += double(rank1_range_utilization[i]);
+		sum += double(rank_max_range_utilization[0][i]);
 	}	
 	for (size_t i = 0; i < 10; i++) {
     	sb += "\n";
-    	sb += "current power budget utilization [1] range [" + NumberToString(i) + "] : " +  NumberToString(double(rank1_range_utilization[i])/sum);
+    	sb += "current power budget utilization [1] range [" + NumberToString(i) + "] : " +  NumberToString(double(rank_max_range_utilization[0][i])/sum);
 	}
     sb += "\n";
-    sb += "current power budget utilization [1] high : " +  NumberToString(double(rank1_range_utilization[9] + rank1_range_utilization[8] + rank1_range_utilization[7])/sum);
+    sb += "current power budget utilization [1] high : " +  NumberToString(double(rank_max_range_utilization[0][9] + rank_max_range_utilization[0][8] + rank_max_range_utilization[0][7])/sum);
     sb += "\n";
-    sb += "current power budget utilization [1] mid : " +  NumberToString(double(rank1_range_utilization[6] + rank1_range_utilization[5] + rank1_range_utilization[4] + rank1_range_utilization[3])/sum);
+    sb += "current power budget utilization [1] mid : " +  NumberToString(double(rank_max_range_utilization[0][6] + rank_max_range_utilization[0][5] + rank_max_range_utilization[0][4] + rank_max_range_utilization[0][3])/sum);
     sb += "\n";
-    sb += "current power budget utilization [1] low : " +  NumberToString(double(rank1_range_utilization[2] + rank1_range_utilization[1] + rank1_range_utilization[0])/sum);
+    sb += "current power budget utilization [1] low : " +  NumberToString(double(rank_max_range_utilization[0][2] + rank_max_range_utilization[0][1] + rank_max_range_utilization[0][0])/sum);
 
 
 	rank = ranks->at(1);
@@ -1174,26 +1167,28 @@ void MemoryController::getDramStats(string &sb)
     sb += "\n";
     sb += "current max bank block cycles [2] : "+     NumberToString(rank->getMax_BankBlockCycles());
     sb += "\n";
-    sb += "current max power budget utilization [2] : "+     NumberToString(rank2_max_utilization);
+    sb += "current max power budget utilization [2] : "+     NumberToString(rank_max_utilization[1]);
     sb += "\n";
-    sb += "current power budget utilization [2] : "+     NumberToString(rank2_utilization/countTimes2);
+    sb += "current power budget utilization [2] : "+     NumberToString(rank_utilization[1]/countTimes[1]);
     sb += "\n";
-    sb += "current average power budget utilization : "+     NumberToString(((rank1_utilization/countTimes1) + (rank2_utilization/countTimes2))/2.0);
+    sb += "current power budget utilization [2] Times : "+     NumberToString(countTimes[1]);
+    sb += "\n";
+    sb += "current average power budget utilization : "+     NumberToString((rank_max_utilization[0] + rank_max_utilization[1])/2.0);
      
 	sum = 0;
 	for (size_t i = 0; i < 10; i++) {
-		sum += double(rank2_range_utilization[i]);
+		sum += double(rank_max_range_utilization[1][i]);
 	}	
 	for (size_t i = 0; i < 10; i++) {
     	sb += "\n";
-    	sb += "current power budget utilization [2] range [" + NumberToString(i) + "] : " +  NumberToString(double(rank2_range_utilization[i])/sum);
+    	sb += "current power budget utilization [2] range [" + NumberToString(i) + "] : " +  NumberToString(double(rank_max_range_utilization[1][i])/sum);
 	}
     sb += "\n";
-    sb += "current power budget utilization [2] high : " +  NumberToString(double(rank2_range_utilization[9] + rank2_range_utilization[8] + rank2_range_utilization[7])/sum);
+    sb += "current power budget utilization [2] high : " +  NumberToString(double(rank_max_range_utilization[1][9] + rank_max_range_utilization[1][8] + rank_max_range_utilization[1][7])/sum);
     sb += "\n";
-    sb += "current power budget utilization [2] mid : " +  NumberToString(double(rank2_range_utilization[6] + rank2_range_utilization[5] + rank2_range_utilization[4] + rank2_range_utilization[3])/sum);
+    sb += "current power budget utilization [2] mid : " +  NumberToString(double(rank_max_range_utilization[1][6] + rank_max_range_utilization[1][5] + rank_max_range_utilization[1][4] + rank_max_range_utilization[1][3])/sum);
     sb += "\n";
-    sb += "current power budget utilization [2] low : " +  NumberToString(double(rank2_range_utilization[2] + rank2_range_utilization[1] + rank2_range_utilization[0])/sum);
+    sb += "current power budget utilization [2] low : " +  NumberToString(double(rank_max_range_utilization[1][2] + rank_max_range_utilization[1][1] + rank_max_range_utilization[1][0])/sum);
  
 	sb += "\n";
     sb += "current average max request token [1] : "+       NumberToString(double(SumMaxToken1stD)/totalWriteCount);

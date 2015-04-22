@@ -70,7 +70,10 @@ public:
 	uint64_t * counter;
 	// laisky: trace the power utilization for BaseLine
 	uint64_t real_token[NUM_CHIPS];
+	// laisky: use same bits shifting
+	uint64_t sub_mask[(LINE_SIZE>>3)/SUB_REQUEST_COUNT];
 
+	void copyMask(uint64_t *mask);
 	friend ostream &operator<<(ostream &os, const Transaction &t);
 	//functions
 	Transaction(TransactionType transType, uint64_t addr, void *data);

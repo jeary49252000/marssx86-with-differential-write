@@ -183,6 +183,13 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
 	shifted = false;
 }
 
+void BusPacket::copyMask(uint64_t * mask) {
+	for (size_t i = 0; i < ((LINE_SIZE>>3)/SUB_REQUEST_COUNT); ++i) {
+		sub_mask[i] = mask[i];
+	}
+}
+
+
 /*
 void BusPacket::copyTokens(uint64_t ** tokens) {
 	for (size_t i = 0; i <= SUB_REQUEST_COUNT -1; ++i) {

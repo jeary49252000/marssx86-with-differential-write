@@ -80,6 +80,9 @@ public:
 	uint64_t getMaxToken();
 	// laisky:
 	bool shifted;
+	// laisky: use same bits shifting
+	uint64_t sub_mask[(LINE_SIZE>>3)/SUB_REQUEST_COUNT];
+	void copyMask(uint64_t *mask);
 	//Functions
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, uint64_t time);
 	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, uint64_t allocated_token[], unsigned iter, ostream &dramsim_log_, uint64_t time);
